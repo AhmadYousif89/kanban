@@ -1,0 +1,89 @@
+import { useMemo } from 'react';
+import { DndContext, DragOverlay } from '@dnd-kit/core';
+import { horizontalListSortingStrategy, SortableContext } from '@dnd-kit/sortable';
+import { TaskDragOverlay } from '../components/tasks';
+import { EmptyStateBoard } from '../components/boards';
+import { AddColumnDialog, ColumnDragOverlay, SortableColumn } from '../components/columns';
+import { useActiveBoard } from '../context/kanban-context';
+import { useBoardDnd } from '../hooks/use-board-dnd';
+
+export const ActiveBoard = () => {
+  const board = useActiveBoard();
+  const {
+    activeColumnId,
+    activeTaskId,
+    collisionDetection,
+    columnIds,
+    isTaskDragging,
+    onDragCancel,
+    onDragEnd,
+    onDragOver,
+    onDragStart,
+    previewBoard,
+    overColumnId,
+    sensors,
+  } = useBoardDnd({ board });
+
+  const renderBoard = previewBoard ?? board;
+
+  const activeTask = useMemo(() => {
+    if (!activeTaskId || !renderBoard) return null;
+    for (const column of renderBoard.columns) {
+      const task = column.tasks.find((t) => t.id === activeTaskId);
+      if (task) return task;
+    }
+    return null;
+  }, [activeTaskId, renderBoard]);
+
+  const activeColumn = useMemo(() => {
+    if (!activeColumnId || !renderBoard) return null;
+    return renderBoard.columns.find((col) => col.id === activeColumnId) ?? null;
+  }, [activeColumnId, renderBoard]);
+
+  if (!renderBoard || !renderBoard.columns.length) return <EmptyStateBoard />;
+
+  return (
+    <section className='flex flex-col h-full py-4 px-2 md:px-3 md:py-6 overflow-auto no-scrollbar'>
+      <DndContext
+        sensors={sensors}
+        onDragEnd={onDragEnd}
+        onDragOver={onDragOver}
+        onDragStart={onDragStart}
+        onDragCancel={onDragCancel}
+        collisionDetection={collisionDetection}
+      >
+        <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
+          <ul className='flex grow'>
+            {renderBoard.columns.map((column) => (
+              <SortableColumn
+                key={column.id}
+                column={column}
+                isDropTarget={overColumnId === column.id}
+                isTaskDragging={isTaskDragging}
+              />
+            ))}
+
+            <li className='flex w-70 h-full shrink-0 flex-col p-3 in-data-fullscreen:ml-auto'>
+              <div className='mb-4 flex items-center gap-3 select-none' aria-hidden>
+                <span className='size-3 rounded-full bg-transparent' />
+                <span className='text-xs font-bold uppercase tracking-[0.2em] text-transparent'>
+                  New Column
+                </span>
+              </div>
+
+              <AddColumnDialog
+                label='+ New Column'
+                triggerClassName='grow p-0 max-h-screen rounded-lg bg-muted dark:bg-[#22232E] text-xl lg:text-2xl text-muted-foreground hover:text-foreground hover:bg-primary/10 focus-visible:ring-offset-2 focus-visible:ring-offset-background'
+              />
+            </li>
+          </ul>
+        </SortableContext>
+
+        <DragOverlay>
+          {activeTask ? <TaskDragOverlay task={activeTask} /> : null}
+          {activeColumn ? <ColumnDragOverlay column={activeColumn} /> : null}
+        </DragOverlay>
+      </DndContext>
+    </section>
+  );
+};
