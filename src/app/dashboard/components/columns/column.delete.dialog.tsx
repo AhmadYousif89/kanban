@@ -1,5 +1,7 @@
 'use client';
 
+import type { ReactNode } from 'react';
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,30 +19,64 @@ import type { Column } from '../../context/kanban.types';
 import { Button } from '@/components/ui/button';
 import { Trash2 } from 'lucide-react';
 
-type DeleteColumnDialogProps = { boardId: string; column: Column };
+type DeleteColumnDialogProps = {
+  boardId: string;
+  column: Column;
+  open?: boolean;
+  onOpenChange?(open: boolean): void;
+  onDelete?(): void;
+  trigger?: ReactNode;
+};
 
-export const DeleteColumnDialog = ({ boardId, column }: DeleteColumnDialogProps) => {
+export const DeleteColumnDialog = ({
+  boardId,
+  column,
+  open,
+  onOpenChange,
+  onDelete,
+  trigger,
+}: DeleteColumnDialogProps) => {
   const { deleteColumn } = useKanbanActions();
+  const taskCount = column.tasks.length;
+  const hasTasks = taskCount > 0;
+  const taskLabel = taskCount === 1 ? 'task' : 'tasks';
+
+  const handleDelete = () => {
+    if (onDelete) {
+      onDelete();
+      return;
+    }
+
+    deleteColumn(boardId, column.id);
+  };
 
   return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <Button
-          size='icon-sm'
-          variant='ghost'
-          aria-label={`Delete ${column.name} column`}
-          className='touch-none hover:text-destructive hover:bg-destructive/10!'
-        >
-          <Trash2 aria-hidden />
-        </Button>
-      </AlertDialogTrigger>
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      {trigger !== undefined ? (
+        trigger && <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
+      ) : (
+        <AlertDialogTrigger asChild>
+          <Button
+            size='icon-sm'
+            variant='ghost'
+            aria-label={`Delete ${column.name} column`}
+            className='touch-none hover:text-destructive hover:bg-destructive/10!'
+          >
+            <Trash2 aria-hidden />
+          </Button>
+        </AlertDialogTrigger>
+      )}
       <AlertDialogContent className='p-6 md:p-8 md:pb-10'>
         <AlertDialogHeader>
           <AlertDialogTitle className='text-destructive'>
-            Delete Column "{column.name}"?
+            {hasTasks
+              ? `Delete "${column.name}" and ${taskCount} ${taskLabel}?`
+              : `Delete Column "${column.name}"?`}
           </AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete this column? This action cannot be reversed.
+            {hasTasks
+              ? `This column contains ${taskCount} ${taskLabel}. Deleting it will permanently remove the column and all ${taskLabel} inside it.`
+              : 'Are you sure? This action cannot be reversed.'}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className='gap-4'>
@@ -50,7 +86,7 @@ export const DeleteColumnDialog = ({ boardId, column }: DeleteColumnDialogProps)
           <AlertDialogAction
             size='lg'
             variant='destructive'
-            onClick={() => deleteColumn(boardId, column.id)}
+            onClick={handleDelete}
             className='flex-1 rounded-full min-h-10'
           >
             Delete

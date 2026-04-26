@@ -1,9 +1,8 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
-import { CrossIcon } from '@/components/icons';
-import { Button } from '@/components/ui/button';
+
 import {
   Dialog,
   DialogContent,
@@ -20,13 +19,16 @@ import {
   FieldLegend,
   FieldSet,
 } from '@/components/ui/field';
-import { InputGroup, InputGroupInput } from '@/components/ui/input-group';
 import { Input } from '@/components/ui/input';
-import type { Board } from '../../context/kanban.types';
+import { CrossIcon } from '@/components/icons';
+import { Button } from '@/components/ui/button';
+import { InputGroup, InputGroupInput } from '@/components/ui/input-group';
+import { useColorPickerDialogGuard } from '../../hooks/use-color-picker-dialog-guard';
 import { columnColorOptions, MAX_COLUMNS } from '../../context/kanban.utils';
 import { useActiveBoard, useKanbanActions } from '../../context/kanban-context';
 import { ColumnColorPicker } from '../columns/column.color-picker';
-import { useColorPickerDialogGuard } from '../../hooks/use-color-picker-dialog-guard';
+import { DeleteColumnDialog } from '../columns/column.delete.dialog';
+import type { Board } from '../../context/kanban.types';
 
 type BoardFormValues = {
   name: string;
@@ -52,7 +54,9 @@ function createDefaultValues(board: Board | null): BoardFormValues {
 export const EditBoardDialog = ({ open, onOpenChange }: EditBoardDialogProps) => {
   const activeBoard = useActiveBoard();
   const { saveBoard } = useKanbanActions();
+  const [pendingRemoveIndex, setPendingRemoveIndex] = useState<number | null>(null);
   const { clearGuard, onColorPickerChange, preventDialogDismissal } = useColorPickerDialogGuard();
+
   const form = useForm<BoardFormValues>({
     defaultValues: createDefaultValues(activeBoard),
   });
@@ -66,12 +70,44 @@ export const EditBoardDialog = ({ open, onOpenChange }: EditBoardDialogProps) =>
     name: 'columns',
     keyName: 'fieldKey',
   });
+
   const hitColumnLimit = fields.length >= MAX_COLUMNS;
+  const pendingColumn = pendingRemoveIndex !== null ? fields[pendingRemoveIndex] : null;
+  const pendingBoardColumn =
+    pendingColumn && activeBoard
+      ? (activeBoard.columns.find((column) => column.id === pendingColumn.id) ?? null)
+      : null;
 
   const handleOpenChange = (nextOpen: boolean) => {
     onOpenChange(nextOpen);
     if (!nextOpen) clearGuard();
+    setPendingRemoveIndex(null);
     form.reset(createDefaultValues(activeBoard));
+  };
+
+  const handleConfirmColumnRemoval = () => {
+    if (pendingRemoveIndex === null) return;
+    remove(pendingRemoveIndex);
+    setPendingRemoveIndex(null);
+  };
+
+  const handleRemoveColumn = (index: number) => {
+    const selectedColumn = fields[index];
+
+    if (!selectedColumn?.id) {
+      remove(index);
+      return;
+    }
+
+    const hasTasks =
+      activeBoard?.columns.find((column) => column.id === selectedColumn.id)?.tasks.length ?? 0;
+
+    if (hasTasks > 0) {
+      setPendingRemoveIndex(index);
+      return;
+    }
+
+    remove(index);
   };
 
   const handleSubmit = (values: BoardFormValues) => {
@@ -93,148 +129,162 @@ export const EditBoardDialog = ({ open, onOpenChange }: EditBoardDialogProps) =>
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent
-        showCloseButton
-        className='p-6'
-        onEscapeKeyDown={preventDialogDismissal}
-        onInteractOutside={preventDialogDismissal}
-        onPointerDownOutside={preventDialogDismissal}
-      >
-        <DialogHeader>
-          <DialogTitle className='font-bold text-lg'>Edit Board</DialogTitle>
-          <DialogDescription>
-            Update the board label and columns used for this workflow.
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        <DialogContent
+          showCloseButton
+          className='p-6'
+          onEscapeKeyDown={preventDialogDismissal}
+          onInteractOutside={preventDialogDismissal}
+          onPointerDownOutside={preventDialogDismissal}
+        >
+          <DialogHeader>
+            <DialogTitle className='font-bold text-lg'>Edit Board</DialogTitle>
+            <DialogDescription>
+              Update the board label and columns used for this workflow.
+            </DialogDescription>
+          </DialogHeader>
 
-        <form onSubmit={form.handleSubmit(handleSubmit)} className='flex flex-col gap-6'>
-          <FieldSet>
-            <FieldLegend className='font-bold text-muted-foreground dark:text-white'>
-              Board Name
-            </FieldLegend>
-            <FieldGroup className='gap-3'>
-              <Controller
-                name='name'
-                control={form.control}
-                rules={{
-                  required: 'Board name is required.',
-                  minLength: {
-                    value: 3,
-                    message: 'Board name must be at least 3 characters.',
-                  },
-                  maxLength: {
-                    value: 50,
-                    message: 'Board name must be at most 50 characters.',
-                  },
-                }}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid} className='gap-2'>
-                    <FieldLabel htmlFor='board-name-edit' className='sr-only'>
-                      Board Name
-                    </FieldLabel>
-                    <Input
-                      {...field}
-                      type='text'
-                      id='board-name-edit'
-                      placeholder='e.g. Web Design'
-                      aria-invalid={fieldState.invalid}
+          <form onSubmit={form.handleSubmit(handleSubmit)} className='flex flex-col gap-6'>
+            <FieldSet>
+              <FieldLegend className='font-bold text-muted-foreground dark:text-white'>
+                Board Name
+              </FieldLegend>
+              <FieldGroup className='gap-3'>
+                <Controller
+                  name='name'
+                  control={form.control}
+                  rules={{
+                    required: 'Board name is required.',
+                    minLength: {
+                      value: 3,
+                      message: 'Board name must be at least 3 characters.',
+                    },
+                    maxLength: {
+                      value: 50,
+                      message: 'Board name must be at most 50 characters.',
+                    },
+                  }}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid} className='gap-2'>
+                      <FieldLabel htmlFor='board-name-edit' className='sr-only'>
+                        Board Name
+                      </FieldLabel>
+                      <Input
+                        {...field}
+                        type='text'
+                        id='board-name-edit'
+                        placeholder='e.g. Web Design'
+                        aria-invalid={fieldState.invalid}
+                      />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    </Field>
+                  )}
+                />
+              </FieldGroup>
+            </FieldSet>
+
+            <FieldSet>
+              <FieldLegend className='font-bold text-muted-foreground dark:text-white'>
+                Board Columns
+              </FieldLegend>
+              <FieldGroup className='gap-3'>
+                <div className='grid gap-3 max-md:max-h-54 max-md:overflow-y-auto max-md:no-scrollbar max-md:p-1'>
+                  {fields.map((field, index) => (
+                    <Controller
+                      key={field.fieldKey}
+                      name={`columns.${index}.name`}
+                      control={form.control}
+                      rules={index === 0 ? { required: 'Column name is required.' } : undefined}
+                      render={({ field: columnField, fieldState }) => (
+                        <Field data-invalid={fieldState.invalid} className='gap-2'>
+                          <FieldLabel htmlFor={`board-column-${index}`} className='sr-only'>
+                            Board Column Name
+                          </FieldLabel>
+                          <div className='flex items-center gap-2'>
+                            <InputGroup>
+                              <InputGroupInput
+                                {...columnField}
+                                type='text'
+                                id={`board-column-${index}`}
+                                placeholder={index === 0 ? 'e.g. Todo, In Progress' : ''}
+                                aria-invalid={fieldState.invalid}
+                              />
+                              <Controller
+                                name={`columns.${index}.color`}
+                                control={form.control}
+                                render={({ field: colorField }) => (
+                                  <ColumnColorPicker
+                                    value={colorField.value}
+                                    onChange={colorField.onChange}
+                                    onOpenChange={onColorPickerChange}
+                                    onDismiss={clearGuard}
+                                  />
+                                )}
+                              />
+                            </InputGroup>
+                            <Button
+                              type='button'
+                              size='icon-sm'
+                              variant='ghost'
+                              className='hover:bg-transparent! hover:**:fill-destructive active:**:fill-destructive active:bg-background'
+                              onClick={() => handleRemoveColumn(index)}
+                            >
+                              <span className='sr-only'>Remove column</span>
+                              <CrossIcon aria-hidden />
+                            </Button>
+                          </div>
+                          {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                        </Field>
+                      )}
                     />
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                  </Field>
-                )}
-              />
-            </FieldGroup>
-          </FieldSet>
+                  ))}
+                </div>
 
-          <FieldSet>
-            <FieldLegend className='font-bold text-muted-foreground dark:text-white'>
-              Board Columns
-            </FieldLegend>
-            <FieldGroup className='gap-3'>
-              <div className='grid gap-3 max-md:max-h-54 max-md:overflow-y-auto max-md:no-scrollbar max-md:p-1'>
-                {fields.map((field, index) => (
-                  <Controller
-                    key={field.fieldKey}
-                    name={`columns.${index}.name`}
-                    control={form.control}
-                    rules={index === 0 ? { required: 'Column name is required.' } : undefined}
-                    render={({ field: columnField, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid} className='gap-2'>
-                        <FieldLabel htmlFor={`board-column-${index}`} className='sr-only'>
-                          Board Column Name
-                        </FieldLabel>
-                        <div className='flex items-center gap-2'>
-                          <InputGroup>
-                            <InputGroupInput
-                              {...columnField}
-                              type='text'
-                              id={`board-column-${index}`}
-                              placeholder={index === 0 ? 'e.g. Todo, In Progress' : ''}
-                              aria-invalid={fieldState.invalid}
-                            />
-                            <Controller
-                              name={`columns.${index}.color`}
-                              control={form.control}
-                              render={({ field: colorField }) => (
-                                <ColumnColorPicker
-                                  value={colorField.value}
-                                  onChange={colorField.onChange}
-                                  onOpenChange={onColorPickerChange}
-                                  onDismiss={clearGuard}
-                                />
-                              )}
-                            />
-                          </InputGroup>
-                          <Button
-                            type='button'
-                            size='icon-sm'
-                            variant='ghost'
-                            className='hover:bg-transparent! hover:**:fill-destructive active:**:fill-destructive active:bg-background'
-                            onClick={() => remove(index)}
-                          >
-                            <span className='sr-only'>Remove column</span>
-                            <CrossIcon aria-hidden />
-                          </Button>
-                        </div>
-                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                      </Field>
-                    )}
-                  />
-                ))}
-              </div>
+                <div className='grid gap-2'>
+                  {hitColumnLimit && (
+                    <p className='text-center text-xs font-medium text-muted-foreground'>
+                      Maximum of {MAX_COLUMNS} columns allowed per board.
+                    </p>
+                  )}
+                  <Button
+                    type='button'
+                    variant='secondary'
+                    className='h-10 rounded-full'
+                    disabled={hitColumnLimit}
+                    onClick={() =>
+                      append({
+                        name: '',
+                        color: columnColorOptions[fields.length % columnColorOptions.length],
+                      })
+                    }
+                  >
+                    + Add New Column
+                  </Button>
+                </div>
+              </FieldGroup>
+            </FieldSet>
 
-              <div className='grid gap-2'>
-                {hitColumnLimit && (
-                  <p className='text-center text-xs font-medium text-muted-foreground'>
-                    Maximum of {MAX_COLUMNS} columns allowed per board.
-                  </p>
-                )}
-                <Button
-                  type='button'
-                  variant='secondary'
-                  className='h-10 rounded-full'
-                  disabled={hitColumnLimit}
-                  onClick={() =>
-                    append({
-                      name: '',
-                      color: columnColorOptions[fields.length % columnColorOptions.length],
-                    })
-                  }
-                >
-                  + Add New Column
-                </Button>
-              </div>
-            </FieldGroup>
-          </FieldSet>
-
-          <DialogFooter>
-            <Button type='submit' className='rounded-full w-full'>
-              Save Changes
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+            <DialogFooter>
+              <Button type='submit' className='rounded-full w-full'>
+                Save Changes
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+      {pendingBoardColumn && (
+        <DeleteColumnDialog
+          boardId={activeBoard?.id ?? ''}
+          column={pendingBoardColumn}
+          open={pendingRemoveIndex !== null}
+          onOpenChange={(nextOpen) => {
+            if (!nextOpen) setPendingRemoveIndex(null);
+          }}
+          onDelete={handleConfirmColumnRemoval}
+          trigger={null}
+        />
+      )}
+    </>
   );
 };
