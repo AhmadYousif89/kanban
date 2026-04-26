@@ -58,7 +58,7 @@ export const AddBoardDialog = ({
     control: form.control,
     name: 'columns',
   });
-  const hasReachedColumnLimit = fields.length >= MAX_COLUMNS;
+  const hitColumnLimit = fields.length >= MAX_COLUMNS;
 
   const handleOpenChange = (nextOpen: boolean) => {
     setOpen(nextOpen);
@@ -218,7 +218,7 @@ export const AddBoardDialog = ({
               </div>
 
               <div className='grid gap-2'>
-                {hasReachedColumnLimit && (
+                {hitColumnLimit && (
                   <p className='text-center text-xs font-medium text-muted-foreground'>
                     Maximum of {MAX_COLUMNS} columns allowed per board.
                   </p>
@@ -227,7 +227,7 @@ export const AddBoardDialog = ({
                   type='button'
                   variant='secondary'
                   className='h-10 rounded-full'
-                  disabled={hasReachedColumnLimit}
+                  disabled={hitColumnLimit}
                   onClick={() =>
                     append({
                       name: '',

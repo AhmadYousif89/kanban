@@ -46,7 +46,10 @@ export const AddColumnDialog = ({
   const activeBoard = useActiveBoard();
   const { saveColumn } = useKanbanActions();
   const form = useForm<ColumnFormValues>({ defaultValues });
-  const hasReachedColumnLimit = activeBoard != null && activeBoard.columns.length >= MAX_COLUMNS;
+
+  if (!activeBoard) return null;
+
+  const hitColumnLimit = activeBoard.columns.length >= MAX_COLUMNS;
 
   const handleOpenChange = (nextOpen: boolean) => {
     setOpen(nextOpen);
@@ -55,9 +58,7 @@ export const AddColumnDialog = ({
   };
 
   const handleSubmit = (values: ColumnFormValues) => {
-    if (!activeBoard || hasReachedColumnLimit) {
-      return;
-    }
+    if (!activeBoard || hitColumnLimit) return;
 
     saveColumn(activeBoard.id, {
       name: values.name.trim(),
@@ -74,7 +75,7 @@ export const AddColumnDialog = ({
         <Button
           type='button'
           className={cn('w-full', triggerClassName)}
-          disabled={!activeBoard || hasReachedColumnLimit}
+          disabled={!activeBoard || hitColumnLimit}
         >
           {label}
         </Button>
@@ -145,12 +146,12 @@ export const AddColumnDialog = ({
           <DialogFooter>
             <Button
               type='submit'
-              disabled={!activeBoard || hasReachedColumnLimit}
+              disabled={!activeBoard || hitColumnLimit}
               className='w-full rounded-full'
             >
               Create Column
             </Button>
-            {hasReachedColumnLimit ? (
+            {hitColumnLimit ? (
               <p className='text-center text-xs font-medium text-muted-foreground'>
                 Maximum of {MAX_COLUMNS} columns reached.
               </p>

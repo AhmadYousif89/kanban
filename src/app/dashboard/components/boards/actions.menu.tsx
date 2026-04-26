@@ -8,10 +8,10 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
 import { VerticalEllipsisIcon } from '@/components/icons';
-import { DeleteBoardDialog, EditBoardDialog } from '.';
 import { useActiveBoard } from '../../context/kanban-context';
-import { cn } from '@/lib/utils';
+import { DeleteBoardDialog, EditBoardDialog } from '.';
 
 export const BoardActionsMenu = () => {
   const board = useActiveBoard();
@@ -23,15 +23,15 @@ export const BoardActionsMenu = () => {
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger
-          type='button'
-          className={cn(
-            'group p-1 cursor-pointer transition',
-            'focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:ring-ring/50 outline-0',
-          )}
-        >
-          <span className='sr-only'>Task actions</span>
-          <VerticalEllipsisIcon aria-hidden className='group-hover:*:fill-foreground' />
+        <DropdownMenuTrigger type='button' asChild>
+          <Button
+            size='icon'
+            variant='ghost'
+            className='rounded-xs w-3 hover:bg-transparent! aria-expanded:bg-transparent'
+          >
+            <span className='sr-only'>Board actions</span>
+            <VerticalEllipsisIcon aria-hidden className='group-hover/button:*:fill-current' />
+          </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent
           align='end'

@@ -19,9 +19,9 @@ export function DashboardHeader() {
         />
       </div>
 
-      <div className='flex items-center justify-between grow'>
+      <div className='flex items-center justify-between h-full grow gap-4 truncate'>
         <BoardName />
-        <div className='flex items-center ml-auto gap-2 md:gap-4'>
+        <div className='flex items-center ml-auto gap-2 pr-1 md:gap-4'>
           <AddTaskDialog />
           <BoardActionsMenu />
         </div>

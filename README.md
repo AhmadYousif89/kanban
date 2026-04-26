@@ -63,4 +63,4 @@ A responsive Kanban dashboard with a collapsible desktop sidebar, a compact mobi
 
 Ahmad Yousif : [Github](https://github.com/ahmadyousif89)
 
-Ahmad Yousif : [Frontendmentor](https://frontendmentor.io/ahmadyousif89)
+Ahmad Yousif : [Frontendmentor](https://frontendmentor.io/profile/ahmadyousif89)

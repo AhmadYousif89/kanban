@@ -56,7 +56,7 @@ export function KanbanProvider({
       <div className='flex min-h-svh items-center justify-center bg-background px-6'>
         <LogoIcon
           animated
-          className='hidden md:block dark:*:fill-white *:fill-[#000112]'
+          className='dark:*:fill-white *:fill-[#000112]'
           aria-label='Kanban'
           role='img'
         />

@@ -66,7 +66,7 @@ export const EditBoardDialog = ({ open, onOpenChange }: EditBoardDialogProps) =>
     name: 'columns',
     keyName: 'fieldKey',
   });
-  const hasReachedColumnLimit = fields.length >= MAX_COLUMNS;
+  const hitColumnLimit = fields.length >= MAX_COLUMNS;
 
   const handleOpenChange = (nextOpen: boolean) => {
     onOpenChange(nextOpen);
@@ -215,7 +215,7 @@ export const EditBoardDialog = ({ open, onOpenChange }: EditBoardDialogProps) =>
               </div>
 
               <div className='grid gap-2'>
-                {hasReachedColumnLimit && (
+                {hitColumnLimit && (
                   <p className='text-center text-xs font-medium text-muted-foreground'>
                     Maximum of {MAX_COLUMNS} columns allowed per board.
                   </p>
@@ -224,7 +224,7 @@ export const EditBoardDialog = ({ open, onOpenChange }: EditBoardDialogProps) =>
                   type='button'
                   variant='secondary'
                   className='h-10 rounded-full'
-                  disabled={hasReachedColumnLimit}
+                  disabled={hitColumnLimit}
                   onClick={() =>
                     append({
                       name: '',

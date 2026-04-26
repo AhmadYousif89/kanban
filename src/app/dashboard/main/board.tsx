@@ -1,14 +1,18 @@
 import { useMemo } from 'react';
 import { DndContext, DragOverlay } from '@dnd-kit/core';
 import { horizontalListSortingStrategy, SortableContext } from '@dnd-kit/sortable';
+
 import { TaskDragOverlay } from '../components/tasks';
 import { EmptyStateBoard } from '../components/boards';
-import { AddColumnDialog, ColumnDragOverlay, SortableColumn } from '../components/columns';
-import { useActiveBoard } from '../context/kanban-context';
+import { ColumnDragOverlay, SortableColumn } from '../components/columns';
+import { useActiveBoard, useKanbanActions } from '../context/kanban-context';
 import { useBoardDnd } from '../hooks/use-board-dnd';
+import { MAX_COLUMNS } from '../context/kanban.utils';
+import { Button } from '@/components/ui/button';
 
 export const ActiveBoard = () => {
   const board = useActiveBoard();
+  const { saveColumn } = useKanbanActions();
   const {
     activeColumnId,
     activeTaskId,
@@ -42,6 +46,8 @@ export const ActiveBoard = () => {
 
   if (!renderBoard || !renderBoard.columns.length) return <EmptyStateBoard />;
 
+  const hitColumnLimit = renderBoard.columns.length >= MAX_COLUMNS;
+
   return (
     <section className='flex flex-col h-full py-4 px-2 md:px-3 md:py-6 overflow-auto no-scrollbar'>
       <DndContext
@@ -71,10 +77,18 @@ export const ActiveBoard = () => {
                 </span>
               </div>
 
-              <AddColumnDialog
-                label='+ New Column'
-                triggerClassName='grow p-0 max-h-screen rounded-lg bg-muted dark:bg-[#22232E] text-xl lg:text-2xl text-muted-foreground hover:text-foreground hover:bg-primary/10 focus-visible:ring-offset-2 focus-visible:ring-offset-background'
-              />
+              <Button
+                type='button'
+                variant='outline'
+                onClick={() => {
+                  saveColumn(renderBoard.id, { name: '' });
+                }}
+                disabled={hitColumnLimit}
+                aria-disabled={hitColumnLimit}
+                className='grow p-0 max-h-screen rounded-lg dark:border-border/50 bg-muted dark:bg-[#22232E] text-xl lg:text-2xl text-muted-foreground font-bold'
+              >
+                + New Column
+              </Button>
             </li>
           </ul>
         </SortableContext>
