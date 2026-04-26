@@ -146,8 +146,6 @@ export const EditTaskDialog = ({ task, open, onOpenChange }: EditTaskDialogProps
                     value: 50,
                     message: 'Task name must be at most 50 characters.',
                   },
-                  validate: (value) =>
-                    value === value.trim() || 'Task name cannot start or end with spaces.',
                 }}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid} className='gap-2'>
@@ -205,16 +203,7 @@ export const EditTaskDialog = ({ task, open, onOpenChange }: EditTaskDialogProps
                     key={field.id}
                     name={`subtasks.${index}.title`}
                     control={form.control}
-                    rules={
-                      index === 0
-                        ? {
-                            required: 'Subtask name is required.',
-                            validate: (value) =>
-                              value === value.trim() ||
-                              'Subtask name cannot start or end with spaces.',
-                          }
-                        : undefined
-                    }
+                    rules={index === 0 ? { required: 'Subtask name is required.' } : undefined}
                     render={({ field: subtaskField, fieldState }) => (
                       <Field data-invalid={fieldState.invalid} className='gap-2'>
                         <FieldLabel htmlFor={`task-edit-subtask-${index}`} className='sr-only'>

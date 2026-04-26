@@ -129,7 +129,6 @@ export const AddBoardDialog = ({
                     value: 50,
                     message: 'Board name must be at most 50 characters.',
                   },
-                  validate: (value) => value === value.trim() || 'Board name cannot be empty',
                 }}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid} className='gap-2'>
@@ -161,16 +160,7 @@ export const AddBoardDialog = ({
                     key={field.id}
                     name={`columns.${index}.name`}
                     control={form.control}
-                    rules={
-                      index === 0
-                        ? {
-                            required: 'Column name is required.',
-                            validate: (value) =>
-                              value === value.trim() ||
-                              'Column name cannot start or end with spaces.',
-                          }
-                        : undefined
-                    }
+                    rules={index === 0 ? { required: 'Column name is required.' } : undefined}
                     render={({ field: columnField, fieldState }) => (
                       <Field data-invalid={fieldState.invalid} className='gap-2'>
                         <FieldLabel htmlFor={`column-${index}`} className='sr-only'>

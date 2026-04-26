@@ -96,7 +96,6 @@ export const EditColumnDialog = ({ column, open, onOpenChange }: EditColumnDialo
                     value: 50,
                     message: 'Column name must be at most 50 characters.',
                   },
-                  validate: (value) => value === value.trim() || 'Column name cannot be empty',
                 }}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid} className='gap-2'>

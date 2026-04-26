@@ -127,7 +127,6 @@ export const EditBoardDialog = ({ open, onOpenChange }: EditBoardDialogProps) =>
                     value: 50,
                     message: 'Board name must be at most 50 characters.',
                   },
-                  validate: (value) => value === value.trim() || 'Board name cannot be empty',
                 }}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid} className='gap-2'>
@@ -159,16 +158,7 @@ export const EditBoardDialog = ({ open, onOpenChange }: EditBoardDialogProps) =>
                     key={field.fieldKey}
                     name={`columns.${index}.name`}
                     control={form.control}
-                    rules={
-                      index === 0
-                        ? {
-                            required: 'Column name is required.',
-                            validate: (value) =>
-                              value === value.trim() ||
-                              'Column name cannot start or end with spaces.',
-                          }
-                        : undefined
-                    }
+                    rules={index === 0 ? { required: 'Column name is required.' } : undefined}
                     render={({ field: columnField, fieldState }) => (
                       <Field data-invalid={fieldState.invalid} className='gap-2'>
                         <FieldLabel htmlFor={`board-column-${index}`} className='sr-only'>

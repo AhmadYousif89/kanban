@@ -113,7 +113,6 @@ export const AddColumnDialog = ({
                         value: 50,
                         message: 'Column name must be at most 50 characters.',
                       },
-                      validate: (value) => value === value.trim() || 'Column name cannot be empty',
                     }}
                     render={({ field, fieldState }) => (
                       <InputGroupInput
