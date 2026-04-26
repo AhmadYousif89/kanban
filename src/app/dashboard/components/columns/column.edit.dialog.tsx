@@ -28,11 +28,7 @@ import { DeleteColumnDialog } from './column.delete.dialog';
 
 type ColumnFormValues = { name: string; color: string };
 
-type EditColumnDialogProps = {
-  column: Column;
-  open: boolean;
-  onOpenChange(open: boolean): void;
-};
+type EditColumnDialogProps = { column: Column; open: boolean; onOpenChange(open: boolean): void };
 
 const createDefaultValues = (column: Column): ColumnFormValues => ({
   name: column.name,
@@ -43,9 +39,7 @@ export const EditColumnDialog = ({ column, open, onOpenChange }: EditColumnDialo
   const board = useActiveBoard();
   const { saveColumn } = useKanbanActions();
   const { clearGuard, onColorPickerChange, preventDialogDismissal } = useColorPickerDialogGuard();
-  const form = useForm<ColumnFormValues>({
-    defaultValues: createDefaultValues(column),
-  });
+  const form = useForm<ColumnFormValues>({ defaultValues: createDefaultValues(column) });
 
   if (!board) return null;
 
@@ -64,7 +58,10 @@ export const EditColumnDialog = ({ column, open, onOpenChange }: EditColumnDialo
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={handleOpenChange}
+    >
       <DialogContent
         className='max-w-86 p-6'
         onEscapeKeyDown={preventDialogDismissal}
@@ -74,64 +71,71 @@ export const EditColumnDialog = ({ column, open, onOpenChange }: EditColumnDialo
         <DialogHeader>
           <div className='flex items-center justify-between'>
             <DialogTitle className='text-lg font-bold'>Edit Column</DialogTitle>
-            <DeleteColumnDialog boardId={board.id} column={column} />
+            <DeleteColumnDialog
+              boardId={board.id}
+              column={column}
+            />
           </div>
           <DialogDescription>Update this column name and accent color.</DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={form.handleSubmit(handleSubmit)} className='flex flex-col gap-6'>
+        <form
+          onSubmit={form.handleSubmit(handleSubmit)}
+          className='flex flex-col gap-6'
+        >
           <FieldSet>
             <FieldLegend className='font-bold text-muted-foreground'>Column Name</FieldLegend>
-            <FieldGroup className='gap-3'>
-              <Controller
-                name='name'
-                control={form.control}
-                rules={{
-                  required: 'Column name is required.',
-                  minLength: {
-                    value: 3,
-                    message: 'Column name must be at least 3 characters.',
-                  },
-                  maxLength: {
-                    value: 50,
-                    message: 'Column name must be at most 50 characters.',
-                  },
-                }}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid} className='gap-2'>
-                    <FieldLabel htmlFor={`column-edit-${column.id}`} className='sr-only'>
-                      Column Name
-                    </FieldLabel>
-                    <InputGroup>
-                      <InputGroupInput
-                        {...field}
-                        id={`column-edit-${column.id}`}
-                        type='text'
-                        placeholder='e.g. In Progress'
-                        aria-invalid={fieldState.invalid}
-                      />
-                      <Controller
-                        name='color'
-                        control={form.control}
-                        render={({ field: colorField }) => (
-                          <ColumnColorPicker
-                            value={colorField.value}
-                            onChange={colorField.onChange}
-                            onOpenChange={onColorPickerChange}
-                            onDismiss={clearGuard}
-                          />
-                        )}
-                      />
-                    </InputGroup>
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                  </Field>
-                )}
-              />
-            </FieldGroup>
+            <Controller
+              name='name'
+              control={form.control}
+              rules={{
+                required: 'Column name is required.',
+                minLength: { value: 3, message: 'Column name must be at least 3 characters.' },
+                maxLength: { value: 50, message: 'Column name must be at most 50 characters.' },
+              }}
+              render={({ field, fieldState }) => (
+                <Field
+                  data-invalid={fieldState.invalid}
+                  className='gap-2'
+                >
+                  <FieldLabel
+                    htmlFor={`column-edit-${column.id}`}
+                    className='sr-only'
+                  >
+                    Column Name
+                  </FieldLabel>
+                  <InputGroup>
+                    <InputGroupInput
+                      {...field}
+                      id={`column-edit-${column.id}`}
+                      type='text'
+                      placeholder='e.g. In Progress'
+                      aria-invalid={fieldState.invalid}
+                    />
+                    <Controller
+                      name='color'
+                      control={form.control}
+                      render={({ field: colorField }) => (
+                        <ColumnColorPicker
+                          value={colorField.value}
+                          onChange={colorField.onChange}
+                          onOpenChange={onColorPickerChange}
+                          onDismiss={clearGuard}
+                        />
+                      )}
+                    />
+                  </InputGroup>
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
           </FieldSet>
 
           <DialogFooter>
-            <Button type='submit' className='w-full rounded-full'>
+            <Button
+              type='submit'
+              className='w-full rounded-full'
+            >
               Save Changes
             </Button>
           </DialogFooter>
