@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { DndContext, DragOverlay } from '@dnd-kit/core';
 import { horizontalListSortingStrategy, SortableContext } from '@dnd-kit/sortable';
 
-import { TaskDragOverlay } from '../components/tasks';
+import { TaskCardPreview } from '../components/tasks';
 import { EmptyStateBoard } from '../components/boards';
 import { ColumnDragOverlay, SortableColumn } from '../components/columns';
 import { useActiveBoard, useKanbanActions } from '../context/kanban-context';
@@ -94,7 +94,12 @@ export const ActiveBoard = () => {
         </SortableContext>
 
         <DragOverlay>
-          {activeTask ? <TaskDragOverlay task={activeTask} /> : null}
+          {activeTask ? (
+            <TaskCardPreview
+              task={activeTask}
+              className='pointer-events-none cursor-grabbing select-none drop-shadow-primary/25'
+            />
+          ) : null}
           {activeColumn ? <ColumnDragOverlay column={activeColumn} /> : null}
         </DragOverlay>
       </DndContext>

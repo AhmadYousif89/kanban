@@ -44,9 +44,9 @@ export function DashboardSidebar() {
       >
         <div className='flex grow flex-col justify-between'>
           <nav className='mt-8 pr-5'>
-            <p className='px-6 text-xs font-bold tracking-[0.2em] text-muted-foreground'>
+            <h2 className='px-6 text-xs font-bold tracking-[0.2em] text-muted-foreground'>
               ALL BOARDS ({boards.length})
-            </p>
+            </h2>
             <ul className='mt-5 flex flex-col'>
               {boards.map((board) => {
                 const isSelected = board.id === activeBoardId;
@@ -68,7 +68,7 @@ export function DashboardSidebar() {
                           isSelected ? '*:fill-current' : 'group-hover:*:fill-current',
                         )}
                       />
-                      <span className='truncate text-current'>{board?.name}</span>
+                      <p className='truncate text-current'>{board?.name}</p>
                     </Button>
                   </li>
                 );

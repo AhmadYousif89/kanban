@@ -53,7 +53,7 @@ export const BoardActionsMenu = () => {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <EditBoardDialog open={editOpen} onOpenChange={setEditOpen} />
+      {editOpen && <EditBoardDialog open={editOpen} onOpenChange={setEditOpen} />}
       <DeleteBoardDialog open={deleteOpen} onOpenChange={setDeleteOpen} />
     </>
   );

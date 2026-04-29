@@ -21,9 +21,9 @@ type BoardTaskLocation = TaskLocation & {
   boardIndex: number;
 };
 
-export const columnColorOptions = ['#49C4E5', '#8471F2', '#67E2AE'] as const;
 export const MAX_COLUMNS = 8;
 export const MAX_SUBTASKS = 6;
+export const DEFAULT_COLUMN_COLORS = ['#49C4E5', '#8471F2', '#67E2AE'] as const;
 
 export function getProgressLabel(completed: number, total: number) {
   return `${completed} of ${total} subtasks`;
@@ -106,7 +106,7 @@ export function createColumn(column: ColumnInput, boardId: string, columnIndex: 
   const columnId = `${boardId}-column-${columnIndex}-${slugify(columnName)}`;
   const color = cleanText(
     column.color,
-    columnColorOptions[columnIndex % columnColorOptions.length],
+    DEFAULT_COLUMN_COLORS[columnIndex % DEFAULT_COLUMN_COLORS.length],
   );
 
   return {

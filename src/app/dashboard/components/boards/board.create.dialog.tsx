@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Controller, useFieldArray, useForm } from 'react-hook-form';
+import { useFieldArray } from 'react-hook-form';
 
 import { BoardIcon, CrossIcon } from '@/components/icons';
 import { Button } from '@/components/ui/button';
@@ -14,31 +14,24 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-  FieldLegend,
-  FieldSet,
-} from '@/components/ui/field';
+import { FieldGroup, FieldLegend, FieldSet } from '@/components/ui/field';
 import { InputGroup, InputGroupInput } from '@/components/ui/input-group';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { useKanbanActions } from '../../context/kanban-context';
-import { columnColorOptions, MAX_COLUMNS } from '../../context/kanban.utils';
+import { MAX_COLUMNS, DEFAULT_COLUMN_COLORS } from '../../context/kanban.utils';
 import { ColumnColorPicker } from '../columns/column.color-picker';
 import { useColorPickerDialogGuard } from '../../hooks/use-color-picker-dialog-guard';
-
-type BoardFormValues = {
-  name: string;
-  columns: { name: string; color: string }[];
-};
-
-const defaultValues: BoardFormValues = {
-  name: '',
-  columns: [{ name: '', color: columnColorOptions[0] }],
-};
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  useCustomForm,
+} from '@/components/form';
+import { boardSchema, defaultValues, type BoardFormValues } from './board.schema';
 
 type AddBoardDialogProps = {
   triggerClassName?: string;
@@ -53,7 +46,7 @@ export const AddBoardDialog = ({
   const { saveBoard } = useKanbanActions();
   const { clearGuard, onColorPickerChange, preventDialogDismissal } = useColorPickerDialogGuard();
 
-  const form = useForm<BoardFormValues>({ defaultValues });
+  const form = useCustomForm<BoardFormValues>({ schema: boardSchema, defaultValues });
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: 'columns',
@@ -63,7 +56,7 @@ export const AddBoardDialog = ({
   const handleOpenChange = (nextOpen: boolean) => {
     setOpen(nextOpen);
     if (!nextOpen) clearGuard();
-    if (nextOpen) form.reset(defaultValues);
+    form.reset(defaultValues);
   };
 
   const handleSubmit = (values: BoardFormValues) => {
@@ -110,40 +103,23 @@ export const AddBoardDialog = ({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={form.handleSubmit(handleSubmit)} className='flex flex-col gap-6'>
+        <Form form={form} onSubmit={handleSubmit} className='flex flex-col gap-6'>
           <FieldSet>
             <FieldLegend className='font-bold text-muted-foreground dark:text-white'>
               Board Name
             </FieldLegend>
             <FieldGroup className='gap-3'>
-              <Controller
+              <FormField
                 name='name'
                 control={form.control}
-                rules={{
-                  required: 'Board name is required.',
-                  minLength: {
-                    value: 3,
-                    message: 'Board name must be at least 3 characters.',
-                  },
-                  maxLength: {
-                    value: 50,
-                    message: 'Board name must be at most 50 characters.',
-                  },
-                }}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid} className='gap-2'>
-                    <FieldLabel htmlFor='board-name' className='sr-only'>
-                      Board Name
-                    </FieldLabel>
-                    <Input
-                      {...field}
-                      type='text'
-                      id='board-name'
-                      placeholder='e.g. Web Design'
-                      aria-invalid={fieldState.invalid}
-                    />
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                  </Field>
+                render={({ field }) => (
+                  <FormItem className='gap-2'>
+                    <FormLabel className='sr-only'>Board Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} type='text' id='board-name' placeholder='e.g. Web Design' />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}
               />
             </FieldGroup>
@@ -156,26 +132,24 @@ export const AddBoardDialog = ({
             <FieldGroup className='gap-3'>
               <div className='grid gap-3 max-md:max-h-54 max-md:overflow-y-auto max-md:no-scrollbar max-md:p-1'>
                 {fields.map((field, index) => (
-                  <Controller
+                  <FormField
                     key={field.id}
                     name={`columns.${index}.name`}
                     control={form.control}
-                    rules={index === 0 ? { required: 'Column name is required.' } : undefined}
-                    render={({ field: columnField, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid} className='gap-2'>
-                        <FieldLabel htmlFor={`column-${index}`} className='sr-only'>
-                          Board Column Name
-                        </FieldLabel>
+                    render={({ field: columnField }) => (
+                      <FormItem className='gap-2'>
+                        <FormLabel className='sr-only'>Board Column Name</FormLabel>
                         <div className='flex items-center gap-2'>
                           <InputGroup>
-                            <InputGroupInput
-                              {...columnField}
-                              id={`column-${index}`}
-                              type='text'
-                              placeholder={index === 0 ? 'e.g. Todo, In Progress' : ''}
-                              aria-invalid={fieldState.invalid}
-                            />
-                            <Controller
+                            <FormControl>
+                              <InputGroupInput
+                                {...columnField}
+                                id={`column-${index}`}
+                                type='text'
+                                placeholder={index === 0 ? 'e.g. Todo, In Progress' : ''}
+                              />
+                            </FormControl>
+                            <FormField
                               name={`columns.${index}.color`}
                               control={form.control}
                               render={({ field: colorField }) => (
@@ -200,8 +174,8 @@ export const AddBoardDialog = ({
                             </Button>
                           )}
                         </div>
-                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                      </Field>
+                        <FormMessage />
+                      </FormItem>
                     )}
                   />
                 ))}
@@ -221,7 +195,7 @@ export const AddBoardDialog = ({
                   onClick={() =>
                     append({
                       name: '',
-                      color: columnColorOptions[fields.length % columnColorOptions.length],
+                      color: DEFAULT_COLUMN_COLORS[fields.length % DEFAULT_COLUMN_COLORS.length],
                     })
                   }
                 >
@@ -236,7 +210,7 @@ export const AddBoardDialog = ({
               Create New Board
             </Button>
           </DialogFooter>
-        </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

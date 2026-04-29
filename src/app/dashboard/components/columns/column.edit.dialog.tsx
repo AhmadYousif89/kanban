@@ -1,6 +1,14 @@
 'use client';
 
-import { Controller, useForm } from 'react-hook-form';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  useCustomForm,
+} from '@/components/form';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -11,22 +19,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-  FieldLegend,
-  FieldSet,
-} from '@/components/ui/field';
+import { FieldLegend, FieldSet } from '@/components/ui/field';
 import { InputGroup, InputGroupInput } from '@/components/ui/input-group';
 import { useActiveBoard, useKanbanActions } from '../../context/kanban-context';
 import type { Column } from '../../context/kanban.types';
 import { ColumnColorPicker } from './column.color-picker';
 import { useColorPickerDialogGuard } from '../../hooks/use-color-picker-dialog-guard';
 import { DeleteColumnDialog } from './column.delete.dialog';
-
-type ColumnFormValues = { name: string; color: string };
+import { columnSchema, type ColumnFormValues } from './column.schema';
 
 type EditColumnDialogProps = { column: Column; open: boolean; onOpenChange(open: boolean): void };
 
@@ -39,7 +39,10 @@ export const EditColumnDialog = ({ column, open, onOpenChange }: EditColumnDialo
   const board = useActiveBoard();
   const { saveColumn } = useKanbanActions();
   const { clearGuard, onColorPickerChange, preventDialogDismissal } = useColorPickerDialogGuard();
-  const form = useForm<ColumnFormValues>({ defaultValues: createDefaultValues(column) });
+  const form = useCustomForm<ColumnFormValues>({
+    schema: columnSchema,
+    defaultValues: createDefaultValues(column),
+  });
 
   if (!board) return null;
 
@@ -51,17 +54,12 @@ export const EditColumnDialog = ({ column, open, onOpenChange }: EditColumnDialo
 
   const handleSubmit = (values: ColumnFormValues) => {
     if (!board) return;
-
     saveColumn(board.id, { name: values.name.trim(), color: values.color }, column.id);
-
     onOpenChange(false);
   };
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={handleOpenChange}
-    >
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
         className='max-w-86 p-6'
         onEscapeKeyDown={preventDialogDismissal}
@@ -71,48 +69,30 @@ export const EditColumnDialog = ({ column, open, onOpenChange }: EditColumnDialo
         <DialogHeader>
           <div className='flex items-center justify-between'>
             <DialogTitle className='text-lg font-bold'>Edit Column</DialogTitle>
-            <DeleteColumnDialog
-              boardId={board.id}
-              column={column}
-            />
+            <DeleteColumnDialog boardId={board.id} column={column} />
           </div>
           <DialogDescription>Update this column name and accent color.</DialogDescription>
         </DialogHeader>
 
-        <form
-          onSubmit={form.handleSubmit(handleSubmit)}
-          className='flex flex-col gap-6'
-        >
+        <Form form={form} onSubmit={handleSubmit} className='flex flex-col gap-6'>
           <FieldSet>
             <FieldLegend className='font-bold text-muted-foreground'>Column Name</FieldLegend>
-            <Controller
+            <FormField
               name='name'
               control={form.control}
-              rules={{
-                required: 'Column name is required.',
-                minLength: { value: 3, message: 'Column name must be at least 3 characters.' },
-                maxLength: { value: 50, message: 'Column name must be at most 50 characters.' },
-              }}
-              render={({ field, fieldState }) => (
-                <Field
-                  data-invalid={fieldState.invalid}
-                  className='gap-2'
-                >
-                  <FieldLabel
-                    htmlFor={`column-edit-${column.id}`}
-                    className='sr-only'
-                  >
-                    Column Name
-                  </FieldLabel>
+              render={({ field }) => (
+                <FormItem className='gap-2'>
+                  <FormLabel className='sr-only'>Column Name</FormLabel>
                   <InputGroup>
-                    <InputGroupInput
-                      {...field}
-                      id={`column-edit-${column.id}`}
-                      type='text'
-                      placeholder='e.g. In Progress'
-                      aria-invalid={fieldState.invalid}
-                    />
-                    <Controller
+                    <FormControl>
+                      <InputGroupInput
+                        {...field}
+                        id={`column-edit-${column.id}`}
+                        type='text'
+                        placeholder='e.g. In Progress'
+                      />
+                    </FormControl>
+                    <FormField
                       name='color'
                       control={form.control}
                       render={({ field: colorField }) => (
@@ -125,21 +105,18 @@ export const EditColumnDialog = ({ column, open, onOpenChange }: EditColumnDialo
                       )}
                     />
                   </InputGroup>
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
+                  <FormMessage />
+                </FormItem>
               )}
             />
           </FieldSet>
 
           <DialogFooter>
-            <Button
-              type='submit'
-              className='w-full rounded-full'
-            >
+            <Button type='submit' className='w-full rounded-full'>
               Save Changes
             </Button>
           </DialogFooter>
-        </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

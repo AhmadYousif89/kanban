@@ -1,7 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import {
+  useCustomForm,
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/form';
 
 import { useActiveBoard, useKanbanActions } from '../../context/kanban-context';
 import { Button } from '@/components/ui/button';
@@ -14,25 +22,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-  FieldLegend,
-  FieldSet,
-} from '@/components/ui/field';
+import { FieldGroup, FieldLegend, FieldSet } from '@/components/ui/field';
 import { InputGroup, InputGroupInput } from '@/components/ui/input-group';
 import { cn } from '@/lib/utils';
 import { ColumnColorPicker } from './column.color-picker';
 import { useColorPickerDialogGuard } from '../../hooks/use-color-picker-dialog-guard';
-import { columnColorOptions, MAX_COLUMNS } from '../../context/kanban.utils';
-
-type ColumnFormValues = { name: string; color: string };
+import { MAX_COLUMNS, DEFAULT_COLUMN_COLORS } from '../../context/kanban.utils';
+import { columnSchema, type ColumnFormValues } from './column.schema';
 
 const defaultValues: ColumnFormValues = {
   name: '',
-  color: columnColorOptions[0],
+  color: DEFAULT_COLUMN_COLORS[0],
 };
 
 type AddColumnDialogProps = { label?: string; triggerClassName?: string };
@@ -45,7 +45,7 @@ export const AddColumnDialog = ({
   const { clearGuard, onColorPickerChange, preventDialogDismissal } = useColorPickerDialogGuard();
   const activeBoard = useActiveBoard();
   const { saveColumn } = useKanbanActions();
-  const form = useForm<ColumnFormValues>({ defaultValues });
+  const form = useCustomForm<ColumnFormValues>({ schema: columnSchema, defaultValues });
 
   if (!activeBoard) return null;
 
@@ -53,7 +53,7 @@ export const AddColumnDialog = ({
 
   const handleOpenChange = (nextOpen: boolean) => {
     setOpen(nextOpen);
-    clearGuard();
+    if (nextOpen) clearGuard();
     form.reset(defaultValues);
   };
 
@@ -91,54 +91,42 @@ export const AddColumnDialog = ({
           <DialogDescription>Create a new workflow column for the current board.</DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={form.handleSubmit(handleSubmit)} className='flex flex-col gap-6'>
+        <Form form={form} onSubmit={handleSubmit} className='flex flex-col gap-6'>
           <FieldSet>
             <FieldLegend className='font-bold text-muted-foreground'>Column Name</FieldLegend>
             <FieldGroup className='gap-3'>
-              <Field data-invalid={form.formState.errors.name != null} className='gap-2'>
-                <FieldLabel htmlFor='column-name' className='sr-only'>
-                  Column Name
-                </FieldLabel>
-                <InputGroup>
-                  <Controller
-                    name='name'
-                    control={form.control}
-                    rules={{
-                      required: 'Column name is required.',
-                      minLength: {
-                        value: 3,
-                        message: 'Column name must be at least 3 characters.',
-                      },
-                      maxLength: {
-                        value: 50,
-                        message: 'Column name must be at most 50 characters.',
-                      },
-                    }}
-                    render={({ field, fieldState }) => (
-                      <InputGroupInput
-                        {...field}
-                        type='text'
-                        id='column-name'
-                        placeholder='e.g. Todo'
-                        aria-invalid={fieldState.invalid}
+              <FormField
+                name='name'
+                control={form.control}
+                render={({ field }) => (
+                  <FormItem className='gap-2'>
+                    <FormLabel className='sr-only'>Column Name</FormLabel>
+                    <InputGroup>
+                      <FormControl>
+                        <InputGroupInput
+                          {...field}
+                          type='text'
+                          id='column-name'
+                          placeholder='e.g. Todo'
+                        />
+                      </FormControl>
+                      <FormField
+                        name='color'
+                        control={form.control}
+                        render={({ field: colorField }) => (
+                          <ColumnColorPicker
+                            value={colorField.value}
+                            onChange={colorField.onChange}
+                            onOpenChange={onColorPickerChange}
+                            onDismiss={clearGuard}
+                          />
+                        )}
                       />
-                    )}
-                  />
-                  <Controller
-                    name='color'
-                    control={form.control}
-                    render={({ field }) => (
-                      <ColumnColorPicker
-                        value={field.value}
-                        onChange={field.onChange}
-                        onOpenChange={onColorPickerChange}
-                        onDismiss={clearGuard}
-                      />
-                    )}
-                  />
-                </InputGroup>
-                {form.formState.errors.name && <FieldError errors={[form.formState.errors.name]} />}
-              </Field>
+                    </InputGroup>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </FieldGroup>
           </FieldSet>
 
@@ -156,7 +144,7 @@ export const AddColumnDialog = ({
               </p>
             ) : null}
           </DialogFooter>
-        </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

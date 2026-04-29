@@ -1,6 +1,6 @@
 'use client';
 
-import { Controller, useFieldArray, useForm } from 'react-hook-form';
+import { useFieldArray } from 'react-hook-form';
 
 import { CrossIcon } from '@/components/icons';
 import { Button } from '@/components/ui/button';
@@ -12,14 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-  FieldLegend,
-  FieldSet,
-} from '@/components/ui/field';
+import { FieldGroup, FieldLegend, FieldSet } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -30,17 +23,20 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  useCustomForm,
+} from '@/components/form';
 
 import type { Task } from '../../context/kanban.types';
 import { useActiveBoard, useKanbanActions } from '../../context/kanban-context';
 import { MAX_SUBTASKS } from '../../context/kanban.utils';
-
-type TaskFormValues = {
-  title: string;
-  description: string;
-  status: string;
-  subtasks: { title: string; isCompleted: boolean }[];
-};
+import { createDefaultSubtask, taskSchema, type TaskFormValues } from './task.schema';
 
 type EditTaskDialogProps = {
   task: Task;
@@ -48,27 +44,28 @@ type EditTaskDialogProps = {
   onOpenChange(open: boolean): void;
 };
 
-const defaultSubtask = { title: '', isCompleted: false };
-
 function createDefaultValues(task: Task, status = task.status): TaskFormValues {
+  const subtasks =
+    task.subtasks?.length > 0
+      ? task.subtasks.slice(0, MAX_SUBTASKS).map((subtask) => ({
+          title: subtask.title,
+          isCompleted: subtask.isCompleted,
+        }))
+      : [createDefaultSubtask()];
+
   return {
     title: task.title,
     description: task.description,
     status,
-    subtasks:
-      task.subtasks?.length > 0
-        ? task.subtasks.slice(0, MAX_SUBTASKS).map((subtask) => ({
-            title: subtask.title,
-            isCompleted: subtask.isCompleted,
-          }))
-        : [{ ...defaultSubtask }],
+    subtasks,
   };
 }
 
 export const EditTaskDialog = ({ task, open, onOpenChange }: EditTaskDialogProps) => {
   const board = useActiveBoard();
   const { saveTask } = useKanbanActions();
-  const form = useForm<TaskFormValues>({
+  const form = useCustomForm<TaskFormValues>({
+    schema: taskSchema,
     defaultValues: createDefaultValues(task),
   });
 
@@ -76,13 +73,14 @@ export const EditTaskDialog = ({ task, open, onOpenChange }: EditTaskDialogProps
     control: form.control,
     name: 'subtasks',
   });
+
   const hasReachedSubtaskLimit = fields.length >= MAX_SUBTASKS;
 
   if (!board) return null;
 
   const handleOpenChange = (nextOpen: boolean) => {
     onOpenChange(nextOpen);
-    if (nextOpen) form.reset(createDefaultValues(task));
+    form.reset(createDefaultValues(task));
   };
 
   const handleSubmit = (values: TaskFormValues) => {
@@ -127,40 +125,28 @@ export const EditTaskDialog = ({ task, open, onOpenChange }: EditTaskDialogProps
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={form.handleSubmit(handleSubmit)} className='flex flex-col gap-6'>
+        <Form form={form} onSubmit={handleSubmit} className='flex flex-col gap-6'>
           <FieldSet>
             <FieldLegend className='font-bold text-muted-foreground dark:text-white'>
               Task Name
             </FieldLegend>
             <FieldGroup className='gap-3'>
-              <Controller
+              <FormField
                 name='title'
                 control={form.control}
-                rules={{
-                  required: 'Task name is required.',
-                  minLength: {
-                    value: 3,
-                    message: 'Task name must be at least 3 characters.',
-                  },
-                  maxLength: {
-                    value: 50,
-                    message: 'Task name must be at most 50 characters.',
-                  },
-                }}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid} className='gap-2'>
-                    <FieldLabel htmlFor='task-title-edit' className='sr-only'>
-                      Task Name
-                    </FieldLabel>
-                    <Input
-                      {...field}
-                      type='text'
-                      id='task-title-edit'
-                      placeholder='e.g. Design system updates'
-                      aria-invalid={fieldState.invalid}
-                    />
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                  </Field>
+                render={({ field }) => (
+                  <FormItem className='gap-2'>
+                    <FormLabel className='sr-only'>Task Name</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type='text'
+                        id='task-title-edit'
+                        placeholder='e.g. Design system updates'
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}
               />
             </FieldGroup>
@@ -171,22 +157,23 @@ export const EditTaskDialog = ({ task, open, onOpenChange }: EditTaskDialogProps
               Description
             </FieldLegend>
             <FieldGroup className='gap-3'>
-              <Controller
+              <FormField
                 name='description'
                 control={form.control}
                 render={({ field }) => (
-                  <Field className='gap-2'>
-                    <FieldLabel htmlFor='task-description-edit' className='sr-only'>
-                      Description
-                    </FieldLabel>
-                    <Textarea
-                      {...field}
-                      id='task-description-edit'
-                      rows={4}
-                      placeholder='e.g. Add support for the new dashboard widgets'
-                      className='max-h-28'
-                    />
-                  </Field>
+                  <FormItem className='gap-2'>
+                    <FormLabel className='sr-only'>Description</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        id='task-description-edit'
+                        rows={4}
+                        placeholder='e.g. Add support for the new dashboard widgets'
+                        className='max-h-28'
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}
               />
             </FieldGroup>
@@ -199,24 +186,24 @@ export const EditTaskDialog = ({ task, open, onOpenChange }: EditTaskDialogProps
             <FieldGroup className='gap-3'>
               <div className='grid gap-3 max-md:max-h-32 max-md:overflow-y-auto max-md:no-scrollbar max-md:p-1'>
                 {fields.map((field, index) => (
-                  <Controller
+                  <FormField
                     key={field.id}
                     name={`subtasks.${index}.title`}
                     control={form.control}
                     rules={index === 0 ? { required: 'Subtask name is required.' } : undefined}
-                    render={({ field: subtaskField, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid} className='gap-2'>
-                        <FieldLabel htmlFor={`task-edit-subtask-${index}`} className='sr-only'>
-                          Subtask Name
-                        </FieldLabel>
+                    render={({ field: subtaskField }) => (
+                      <FormItem className='gap-2'>
+                        <FormLabel className='sr-only'>Subtask Name</FormLabel>
                         <div className='flex items-center gap-2'>
-                          <Input
-                            {...subtaskField}
-                            id={`task-edit-subtask-${index}`}
-                            type='text'
-                            placeholder={index === 0 ? 'e.g. Draft wireframes' : ''}
-                            aria-invalid={fieldState.invalid}
-                          />
+                          <FormControl>
+                            <Input
+                              {...subtaskField}
+                              value={subtaskField.value ?? ''}
+                              id={`task-edit-subtask-${index}`}
+                              type='text'
+                              placeholder={index === 0 ? 'e.g. Draft wireframes' : ''}
+                            />
+                          </FormControl>
                           {fields.length > 1 && (
                             <Button
                               type='button'
@@ -230,8 +217,8 @@ export const EditTaskDialog = ({ task, open, onOpenChange }: EditTaskDialogProps
                             </Button>
                           )}
                         </div>
-                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                      </Field>
+                        <FormMessage />
+                      </FormItem>
                     )}
                   />
                 ))}
@@ -248,7 +235,7 @@ export const EditTaskDialog = ({ task, open, onOpenChange }: EditTaskDialogProps
                   variant='secondary'
                   className='h-10 rounded-full'
                   disabled={hasReachedSubtaskLimit}
-                  onClick={() => append({ ...defaultSubtask })}
+                  onClick={() => append(createDefaultSubtask())}
                 >
                   + Add New Subtask
                 </Button>
@@ -261,18 +248,18 @@ export const EditTaskDialog = ({ task, open, onOpenChange }: EditTaskDialogProps
               Status
             </FieldLegend>
             <FieldGroup className='gap-3'>
-              <Controller
+              <FormField
                 name='status'
                 control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field className='gap-2'>
-                    <FieldLabel htmlFor='task-status-edit' className='sr-only'>
-                      Task Status
-                    </FieldLabel>
+                render={({ field }) => (
+                  <FormItem className='gap-2'>
+                    <FormLabel className='sr-only'>Task Status</FormLabel>
                     <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger id='task-status-edit'>
-                        <SelectValue placeholder='Select status' />
-                      </SelectTrigger>
+                      <FormControl>
+                        <SelectTrigger id='task-status-edit'>
+                          <SelectValue placeholder='Select status' />
+                        </SelectTrigger>
+                      </FormControl>
                       <SelectContent position='popper' className='w-(--radix-select-trigger-width)'>
                         <SelectGroup className='p-2'>
                           {board.columns.map((boardColumn) => (
@@ -283,8 +270,8 @@ export const EditTaskDialog = ({ task, open, onOpenChange }: EditTaskDialogProps
                         </SelectGroup>
                       </SelectContent>
                     </Select>
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                  </Field>
+                    <FormMessage />
+                  </FormItem>
                 )}
               />
             </FieldGroup>
@@ -295,7 +282,7 @@ export const EditTaskDialog = ({ task, open, onOpenChange }: EditTaskDialogProps
               Save Changes
             </Button>
           </DialogFooter>
-        </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

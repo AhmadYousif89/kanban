@@ -35,15 +35,13 @@ export const TaskViewDialog = memo(({ task, open, onOpenChange }: TaskViewDialog
   const { moveTask, toggleSubtask } = useKanbanActions();
 
   if (!board) return null;
+
   const completedSubtasks = task.subtasks.filter((subtask) => subtask.isCompleted);
 
   const handleStatusChange = (nextStatus: string) => {
     if (nextStatus === task.status) return;
-
     const destinationColumn = board.columns.find((column) => column.name === nextStatus);
-
     if (!destinationColumn) return;
-
     moveTask(task.id, board.id, destinationColumn.id);
   };
 

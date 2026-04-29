@@ -1,9 +1,18 @@
 'use client';
 
 import { useState } from 'react';
-import { Controller, useFieldArray, useForm } from 'react-hook-form';
+import { useFieldArray } from 'react-hook-form';
 import { PlusIcon } from 'lucide-react';
 
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  useCustomForm,
+} from '@/components/form';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -14,14 +23,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-  FieldLegend,
-  FieldSet,
-} from '@/components/ui/field';
+import { FieldGroup, FieldLegend, FieldSet } from '@/components/ui/field';
 import { CrossIcon } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import { useActiveBoard, useKanbanActions } from '../../context/kanban-context';
@@ -36,21 +38,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-
-type TaskFormValues = {
-  title: string;
-  status: string;
-  description: string;
-  subtasks: { title: string; isCompleted: boolean }[];
-};
-
-const defaultSubtask = { title: '', isCompleted: false };
+import { createDefaultSubtask, taskSchema, type TaskFormValues } from './task.schema';
 
 function createDefaultValues(status = ''): TaskFormValues {
   return {
     title: '',
     description: '',
-    subtasks: [defaultSubtask],
+    subtasks: [createDefaultSubtask()],
     status,
   };
 }
@@ -70,7 +64,8 @@ export const AddTaskDialog = ({
   const activeBoard = useActiveBoard();
   const { saveTask } = useKanbanActions();
 
-  const form = useForm<TaskFormValues>({
+  const form = useCustomForm<TaskFormValues>({
+    schema: taskSchema,
     defaultValues: createDefaultValues(activeBoard?.columns[0]?.name),
   });
 
@@ -84,7 +79,7 @@ export const AddTaskDialog = ({
 
   const handleOpenChange = (nextOpen: boolean) => {
     setOpen(nextOpen);
-    if (nextOpen) form.reset(createDefaultValues(activeBoard.columns[0].name));
+    if (nextOpen) form.reset(createDefaultValues(columnName ?? activeBoard.columns[0].name));
   };
 
   const handleSubmit = (values: TaskFormValues) => {
@@ -140,40 +135,28 @@ export const AddTaskDialog = ({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={form.handleSubmit(handleSubmit)} className='flex flex-col gap-6'>
+        <Form form={form} onSubmit={handleSubmit} className='flex flex-col gap-6'>
           <FieldSet>
             <FieldLegend className='font-bold text-muted-foreground dark:text-white'>
               Task Name
             </FieldLegend>
             <FieldGroup className='gap-3'>
-              <Controller
+              <FormField
                 name='title'
                 control={form.control}
-                rules={{
-                  required: 'Task name is required.',
-                  minLength: {
-                    value: 3,
-                    message: 'Task name must be at least 3 characters.',
-                  },
-                  maxLength: {
-                    value: 50,
-                    message: 'Task name must be at most 50 characters.',
-                  },
-                }}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid} className='gap-2'>
-                    <FieldLabel htmlFor='task-title' className='sr-only'>
-                      Task Name
-                    </FieldLabel>
-                    <Input
-                      {...field}
-                      type='text'
-                      id='task-title'
-                      placeholder='e.g. Design system updates'
-                      aria-invalid={fieldState.invalid}
-                    />
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                  </Field>
+                render={({ field }) => (
+                  <FormItem className='gap-2'>
+                    <FormLabel className='sr-only'>Task Name</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type='text'
+                        id='task-title'
+                        placeholder='e.g. Design system updates'
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}
               />
             </FieldGroup>
@@ -184,22 +167,23 @@ export const AddTaskDialog = ({
               Description
             </FieldLegend>
             <FieldGroup className='gap-3'>
-              <Controller
+              <FormField
                 name='description'
                 control={form.control}
                 render={({ field }) => (
-                  <Field className='gap-2'>
-                    <FieldLabel htmlFor='task-description' className='sr-only'>
-                      Description
-                    </FieldLabel>
-                    <Textarea
-                      {...field}
-                      id='task-description'
-                      rows={4}
-                      placeholder='e.g. Add support for the new dashboard widgets'
-                      className='h-28 resize-none'
-                    />
-                  </Field>
+                  <FormItem className='gap-2'>
+                    <FormLabel className='sr-only'>Description</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        id='task-description'
+                        rows={4}
+                        placeholder='e.g. Add support for the new dashboard widgets'
+                        className='h-28 resize-none'
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}
               />
             </FieldGroup>
@@ -212,24 +196,24 @@ export const AddTaskDialog = ({
             <FieldGroup className='gap-3'>
               <div className='grid gap-3 max-md:max-h-32 max-md:overflow-y-auto max-md:no-scrollbar max-md:p-1'>
                 {fields.map((field, index) => (
-                  <Controller
+                  <FormField
                     key={field.id}
                     name={`subtasks.${index}.title`}
                     control={form.control}
                     rules={index === 0 ? { required: 'Subtask name is required.' } : undefined}
-                    render={({ field: subtaskField, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid} className='gap-2'>
-                        <FieldLabel htmlFor={`subtask-${index}`} className='sr-only'>
-                          Subtask Name
-                        </FieldLabel>
+                    render={({ field: subtaskField }) => (
+                      <FormItem className='gap-2'>
+                        <FormLabel className='sr-only'>Subtask Name</FormLabel>
                         <div className='flex items-center gap-2'>
-                          <Input
-                            {...subtaskField}
-                            id={`subtask-${index}`}
-                            type='text'
-                            placeholder={index === 0 ? 'e.g. Draft wireframes' : ''}
-                            aria-invalid={fieldState.invalid}
-                          />
+                          <FormControl>
+                            <Input
+                              {...subtaskField}
+                              value={subtaskField.value ?? ''}
+                              id={`subtask-${index}`}
+                              type='text'
+                              placeholder={index === 0 ? 'e.g. Draft wireframes' : ''}
+                            />
+                          </FormControl>
                           {fields.length > 1 && (
                             <Button
                               type='button'
@@ -243,8 +227,8 @@ export const AddTaskDialog = ({
                             </Button>
                           )}
                         </div>
-                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                      </Field>
+                        <FormMessage />
+                      </FormItem>
                     )}
                   />
                 ))}
@@ -261,7 +245,7 @@ export const AddTaskDialog = ({
                   variant='secondary'
                   className='h-10 rounded-full'
                   disabled={hasReachedSubtaskLimit}
-                  onClick={() => append({ ...defaultSubtask })}
+                  onClick={() => append(createDefaultSubtask())}
                 >
                   + Add New Subtask
                 </Button>
@@ -274,18 +258,18 @@ export const AddTaskDialog = ({
               Status
             </FieldLegend>
             <FieldGroup className='gap-3'>
-              <Controller
+              <FormField
                 name='status'
                 control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field className='gap-2'>
-                    <FieldLabel htmlFor='task-status' className='sr-only'>
-                      Task Status
-                    </FieldLabel>
-                    <Select value={columnName ?? field.value} onValueChange={field.onChange}>
-                      <SelectTrigger id='task-status' className='hover:border-primary'>
-                        <SelectValue placeholder='Select status' />
-                      </SelectTrigger>
+                render={({ field }) => (
+                  <FormItem className='gap-2'>
+                    <FormLabel className='sr-only'>Task Status</FormLabel>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <FormControl>
+                        <SelectTrigger id='task-status' className='hover:border-primary'>
+                          <SelectValue placeholder='Select status' />
+                        </SelectTrigger>
+                      </FormControl>
                       <SelectContent position='popper' className='w-(--radix-select-trigger-width)'>
                         <SelectGroup className='p-2'>
                           {activeBoard.columns.map((column) => (
@@ -296,8 +280,8 @@ export const AddTaskDialog = ({
                         </SelectGroup>
                       </SelectContent>
                     </Select>
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                  </Field>
+                    <FormMessage />
+                  </FormItem>
                 )}
               />
             </FieldGroup>
@@ -308,7 +292,7 @@ export const AddTaskDialog = ({
               Create Task
             </Button>
           </DialogFooter>
-        </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

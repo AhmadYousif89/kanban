@@ -49,7 +49,7 @@ export const TaskActionsMenu = ({ task }: { task: Task }) => {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <EditTaskDialog open={editOpen} onOpenChange={setEditOpen} task={task} />
+      {editOpen && <EditTaskDialog open={editOpen} onOpenChange={setEditOpen} task={task} />}
       <DeleteTaskDialog open={deleteOpen} onOpenChange={setDeleteOpen} task={task} />
     </>
   );
