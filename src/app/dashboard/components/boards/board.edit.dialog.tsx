@@ -29,7 +29,7 @@ import { useActiveBoard, useKanbanActions } from '../../context/kanban-context';
 import type { Board } from '../../context/kanban.types';
 import { DEFAULT_COLUMN_COLORS, MAX_COLUMNS } from '../../context/kanban.utils';
 import { useColorPickerDialogGuard } from '../../hooks/use-color-picker-dialog-guard';
-import { ColumnColorPicker } from '../columns/column.color-picker';
+import { ColorWheel } from '@/components/color-wheel';
 import { DeleteColumnDialog } from '../columns/column.delete.dialog';
 import { boardSchema, defaultValues, type BoardFormValues } from './board.schema';
 
@@ -196,7 +196,7 @@ export const EditBoardDialog = ({ open, onOpenChange }: EditBoardDialogProps) =>
                                 name={`columns.${index}.color`}
                                 control={form.control}
                                 render={({ field: colorField }) => (
-                                  <ColumnColorPicker
+                                  <ColorWheel
                                     value={colorField.value}
                                     onChange={colorField.onChange}
                                     onOpenChange={onColorPickerChange}

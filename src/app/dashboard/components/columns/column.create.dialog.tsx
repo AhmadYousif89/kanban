@@ -25,7 +25,7 @@ import {
 import { FieldGroup, FieldLegend, FieldSet } from '@/components/ui/field';
 import { InputGroup, InputGroupInput } from '@/components/ui/input-group';
 import { cn } from '@/lib/utils';
-import { ColumnColorPicker } from './column.color-picker';
+import { ColorWheel } from '@/components/color-wheel';
 import { useColorPickerDialogGuard } from '../../hooks/use-color-picker-dialog-guard';
 import { MAX_COLUMNS, DEFAULT_COLUMN_COLORS } from '../../context/kanban.utils';
 import { columnSchema, type ColumnFormValues } from './column.schema';
@@ -114,7 +114,7 @@ export const AddColumnDialog = ({
                         name='color'
                         control={form.control}
                         render={({ field: colorField }) => (
-                          <ColumnColorPicker
+                          <ColorWheel
                             value={colorField.value}
                             onChange={colorField.onChange}
                             onOpenChange={onColorPickerChange}

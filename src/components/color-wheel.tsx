@@ -8,7 +8,7 @@ import Wheel from '@uiw/react-color-wheel';
 import { Button } from '@/components/ui/button';
 import { InputGroupAddon } from '@/components/ui/input-group';
 
-type ColumnColorPickerProps = {
+type ColorWheelProps = {
   value: string;
   label?: string;
   onDismiss?(): void;
@@ -16,13 +16,13 @@ type ColumnColorPickerProps = {
   onOpenChange?(open: boolean): void;
 };
 
-export const ColumnColorPicker = ({
+export const ColorWheel = ({
   value,
   label = 'Column color',
   onDismiss,
   onChange,
   onOpenChange,
-}: ColumnColorPickerProps) => {
+}: ColorWheelProps) => {
   const panelId = useId();
   const contentRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);

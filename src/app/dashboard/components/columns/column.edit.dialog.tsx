@@ -23,7 +23,7 @@ import { FieldLegend, FieldSet } from '@/components/ui/field';
 import { InputGroup, InputGroupInput } from '@/components/ui/input-group';
 import { useActiveBoard, useKanbanActions } from '../../context/kanban-context';
 import type { Column } from '../../context/kanban.types';
-import { ColumnColorPicker } from './column.color-picker';
+import { ColorWheel } from '@/components/color-wheel';
 import { useColorPickerDialogGuard } from '../../hooks/use-color-picker-dialog-guard';
 import { DeleteColumnDialog } from './column.delete.dialog';
 import { columnSchema, type ColumnFormValues } from './column.schema';
@@ -96,7 +96,7 @@ export const EditColumnDialog = ({ column, open, onOpenChange }: EditColumnDialo
                       name='color'
                       control={form.control}
                       render={({ field: colorField }) => (
-                        <ColumnColorPicker
+                        <ColorWheel
                           value={colorField.value}
                           onChange={colorField.onChange}
                           onOpenChange={onColorPickerChange}

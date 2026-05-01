@@ -20,7 +20,7 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { useKanbanActions } from '../../context/kanban-context';
 import { MAX_COLUMNS, DEFAULT_COLUMN_COLORS } from '../../context/kanban.utils';
-import { ColumnColorPicker } from '../columns/column.color-picker';
+import { ColorWheel } from '@/components/color-wheel';
 import { useColorPickerDialogGuard } from '../../hooks/use-color-picker-dialog-guard';
 import {
   Form,
@@ -153,7 +153,7 @@ export const AddBoardDialog = ({
                               name={`columns.${index}.color`}
                               control={form.control}
                               render={({ field: colorField }) => (
-                                <ColumnColorPicker
+                                <ColorWheel
                                   value={colorField.value}
                                   onChange={colorField.onChange}
                                   onOpenChange={onColorPickerChange}

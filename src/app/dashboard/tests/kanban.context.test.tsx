@@ -82,12 +82,10 @@ describe('KanbanProvider', () => {
       expect(screen.getByTestId('sidebar-state')).toHaveTextContent('closed');
     });
 
-    const storageKey = window.localStorage.key(0);
+    const storedState = window.localStorage.getItem(STORAGE_KEY);
 
-    expect(storageKey).toBe(STORAGE_KEY);
-    expect(JSON.parse(window.localStorage.getItem(storageKey ?? '') ?? 'null').isSidebarOpen).toBe(
-      false,
-    );
+    expect(storedState).not.toBeNull();
+    expect(JSON.parse(storedState ?? 'null').isSidebarOpen).toBe(false);
   });
 
   it('throws when dashboard state hooks are used outside the provider', () => {
