@@ -1,75 +1,16 @@
 'use client';
 
-import type {
-  CollisionDetection,
-  DragEndEvent,
-  DragOverEvent,
-  DragStartEvent,
-} from '@dnd-kit/core';
-import {
-  PointerSensor,
-  pointerWithin,
-  TouchSensor,
-  KeyboardSensor,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core';
-import { closestCorners } from '@dnd-kit/core';
-import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
-import { COLUMN_DROP_PREFIX, fromColumnDropId, TASK_PREFIX } from '../main/board.dnd';
+import type { DragEndEvent, DragOverEvent, DragStartEvent } from '@dnd-kit/core';
+import { KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { useCallback, useMemo } from 'react';
 
 import type { Board } from '../context/kanban.types';
 import { toColumnDraggableId } from '../main/board.dnd';
+import { boardCollisionDetection, boardKeyboardCoordinates } from './board-dnd-utils';
 import { useColumnDnd } from './use-column-dnd';
 import { useTaskDnd } from './use-task-dnd';
 
 type UseBoardDndOptions = { board: Board | null };
-
-const collisionDetection: CollisionDetection = (args) => {
-  const { pointerCoordinates, droppableContainers } = args;
-
-  // 1. Find potential column collisions
-  // Use pointerWithin if mouse/touch, otherwise closestCorners for keyboard
-  const columnCollisions = pointerCoordinates
-    ? pointerWithin({
-        ...args,
-        droppableContainers: droppableContainers.filter((c) =>
-          String(c.id).startsWith(COLUMN_DROP_PREFIX),
-        ),
-      })
-    : closestCorners({
-        ...args,
-        droppableContainers: droppableContainers.filter((c) =>
-          String(c.id).startsWith(COLUMN_DROP_PREFIX),
-        ),
-      });
-
-  if (columnCollisions.length > 0) {
-    const overColumnId = String(columnCollisions[0].id);
-    const overColumnUuid = fromColumnDropId(overColumnId);
-
-    // Find the best task collision WITHIN this column.
-    // This prevents tasks in adjacent columns from "stealing" the drop focus.
-    const tasksInThisColumn = droppableContainers.filter((c) => {
-      if (!String(c.id).startsWith(TASK_PREFIX)) return false;
-      return c.data.current?.columnId === overColumnUuid;
-    });
-
-    const taskCollisions = closestCorners({
-      ...args,
-      droppableContainers: tasksInThisColumn,
-    });
-
-    if (taskCollisions.length > 0) return taskCollisions;
-
-    // Otherwise, return the column we are hovering or are closest to.
-    return columnCollisions;
-  }
-
-  // Fallback to closestCorners for cases where no column is found
-  return closestCorners(args);
-};
 
 export function useBoardDnd({ board }: UseBoardDndOptions) {
   const {
@@ -92,7 +33,7 @@ export function useBoardDnd({ board }: UseBoardDndOptions) {
 
   const sensors = useSensors(
     useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
+      coordinateGetter: boardKeyboardCoordinates,
     }),
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(TouchSensor, {
@@ -136,7 +77,7 @@ export function useBoardDnd({ board }: UseBoardDndOptions) {
     isTaskDragging,
     previewBoard,
     overColumnId,
-    collisionDetection,
+    collisionDetection: boardCollisionDetection,
     onDragCancel,
     onDragStart,
     onDragOver,

@@ -3,33 +3,13 @@
 import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
 import { useCallback, useState } from 'react';
 
-import { useKanbanActions } from '../context/kanban-context';
 import type { Board } from '../context/kanban.types';
-import { findTaskLocation } from '../context/kanban.utils';
-import { fromColumnDraggableId, fromColumnDropId, fromTaskDraggableId } from '../main/board.dnd';
+import { useKanbanActions } from '../context/kanban-context';
+import { fromColumnDraggableId } from '../main/board.dnd';
+import { resolveOverColId } from './board-dnd-utils';
 
 type UseColumnDndOptions = {
   board: Board | null;
-};
-
-const resolveOverColumnId = (board: Board, overId: string | null): string | null => {
-  if (!overId) return null;
-
-  const columnId = fromColumnDraggableId(overId);
-
-  if (columnId) return columnId;
-
-  const droppedColumnId = fromColumnDropId(overId);
-
-  if (droppedColumnId) return droppedColumnId;
-
-  const taskId = fromTaskDraggableId(overId);
-
-  if (!taskId) return null;
-
-  const taskLocation = findTaskLocation(board, taskId);
-
-  return taskLocation ? (board.columns[taskLocation.columnIndex]?.id ?? null) : null;
 };
 
 export function useColumnDnd({ board }: UseColumnDndOptions) {
@@ -51,7 +31,7 @@ export function useColumnDnd({ board }: UseColumnDndOptions) {
       }
 
       const sourceColumnId = fromColumnDraggableId(String(active.id)) ?? activeColumnId;
-      const targetColumnId = resolveOverColumnId(board, over ? String(over.id) : null);
+      const targetColumnId = resolveOverColId(board, over ? String(over.id) : null);
 
       if (!sourceColumnId || !targetColumnId || sourceColumnId === targetColumnId) {
         onDragCancel();

@@ -4,89 +4,13 @@ import { useCallback, useState } from 'react';
 import type { DragEndEvent, DragOverEvent, DragStartEvent } from '@dnd-kit/core';
 
 import type { Board } from '../context/kanban.types';
+import { fromTaskDraggableId } from '../main/board.dnd';
+import { findTaskLocation } from '../context/kanban.utils';
 import { useKanbanActions } from '../context/kanban-context';
-import { cloneBoard, findTaskLocation } from '../context/kanban.utils';
-import { fromColumnDraggableId, fromColumnDropId, fromTaskDraggableId } from '../main/board.dnd';
+import { moveTaskInBoard, resolveOverColId } from './board-dnd-utils';
 
 type UseTaskDndOptions = {
   board: Board | null;
-};
-
-const clampIndex = (index: number, max: number) => Math.min(Math.max(index, 0), max);
-
-const resolveOverColumnId = (board: Board, overId: string | null): string | null => {
-  if (!overId) return null;
-
-  const columnId = fromColumnDraggableId(overId);
-
-  if (columnId) return columnId;
-
-  const droppedColumnId = fromColumnDropId(overId);
-
-  if (droppedColumnId) return droppedColumnId;
-
-  const taskId = fromTaskDraggableId(overId);
-
-  if (!taskId) return null;
-
-  if (taskId.startsWith('empty-')) {
-    return taskId.slice(6);
-  }
-
-  const taskLocation = findTaskLocation(board, taskId);
-
-  return taskLocation ? (board.columns[taskLocation.columnIndex]?.id ?? null) : null;
-};
-
-const moveTaskInBoard = (board: Board, taskId: string, toColumnId: string, toIndex: number) => {
-  const sourceLocation = findTaskLocation(board, taskId);
-
-  if (!sourceLocation) return board;
-
-  const destinationColumnIndex = board.columns.findIndex((column) => column.id === toColumnId);
-
-  if (destinationColumnIndex === -1) return board;
-
-  const destinationColumn = board.columns[destinationColumnIndex];
-  let insertIndex = clampIndex(toIndex, destinationColumn.tasks.length);
-
-  if (
-    sourceLocation.columnIndex === destinationColumnIndex &&
-    sourceLocation.taskIndex < insertIndex
-  ) {
-    insertIndex -= 1;
-  }
-
-  if (
-    sourceLocation.columnIndex === destinationColumnIndex &&
-    sourceLocation.taskIndex === insertIndex
-  ) {
-    return board;
-  }
-
-  const nextBoard: Board = {
-    ...board,
-    columns: board.columns.map((col, idx) => {
-      if (idx === sourceLocation.columnIndex || idx === destinationColumnIndex) {
-        return { ...col, tasks: [...col.tasks] };
-      }
-      return col;
-    }),
-  };
-
-  const sourceColumn = nextBoard.columns[sourceLocation.columnIndex];
-  const nextDestinationColumn = nextBoard.columns[destinationColumnIndex];
-  const [task] = sourceColumn.tasks.splice(sourceLocation.taskIndex, 1);
-
-  if (!task) return board;
-
-  insertIndex = clampIndex(insertIndex, nextDestinationColumn.tasks.length);
-  nextDestinationColumn.tasks.splice(insertIndex, 0, {
-    ...task,
-    status: nextDestinationColumn.name,
-  });
-
-  return nextBoard;
 };
 
 export function useTaskDnd({ board }: UseTaskDndOptions) {
@@ -136,7 +60,7 @@ export function useTaskDnd({ board }: UseTaskDndOptions) {
         previewBoard ?? (board ? { ...board, columns: [...board.columns] } : null);
       if (!currentBoard) return;
       const overId = over ? String(over.id) : null;
-      const targetColumnId = resolveOverColumnId(currentBoard, overId);
+      const targetColumnId = resolveOverColId(currentBoard, overId);
 
       setOverColumnId(targetColumnId);
 
