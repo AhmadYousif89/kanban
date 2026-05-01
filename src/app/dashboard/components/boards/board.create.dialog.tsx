@@ -1,8 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { useFieldArray } from 'react-hook-form';
-
+import { ColorWheel } from '@/components/color-wheel';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  useCustomForm,
+} from '@/components/form';
 import { BoardIcon, CrossIcon } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,23 +23,15 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { FieldGroup, FieldLegend, FieldSet } from '@/components/ui/field';
-import { InputGroup, InputGroupInput } from '@/components/ui/input-group';
 import { Input } from '@/components/ui/input';
+import { InputGroup, InputGroupInput } from '@/components/ui/input-group';
 import { cn } from '@/lib/utils';
+import { DEFAULT_COLUMN_COLORS, MAX_COLUMNS } from '../../context/kanban.utils';
 import { useKanbanActions } from '../../context/kanban-context';
-import { MAX_COLUMNS, DEFAULT_COLUMN_COLORS } from '../../context/kanban.utils';
-import { ColorWheel } from '@/components/color-wheel';
-import { useColorPickerDialogGuard } from '../../hooks/use-color-picker-dialog-guard';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-  useCustomForm,
-} from '@/components/form';
-import { boardSchema, defaultValues, type BoardFormValues } from './board.schema';
+import { useDialogDismissalGuard } from '../../hooks/use-dialog-dismissal-guard';
+import { useLimitedFieldArray } from '../../hooks/use-limited-field-array';
+import { FieldArrayList } from '../field-array-list';
+import { type BoardFormValues, boardSchema, defaultValues } from './board.schema';
 
 type AddBoardDialogProps = {
   triggerClassName?: string;
@@ -44,14 +44,18 @@ export const AddBoardDialog = ({
 }: AddBoardDialogProps) => {
   const [open, setOpen] = useState(false);
   const { saveBoard } = useKanbanActions();
-  const { clearGuard, onColorPickerChange, preventDialogDismissal } = useColorPickerDialogGuard();
+  const { clearGuard, setDismissalSuppressed, preventDialogDismissal } = useDialogDismissalGuard();
 
   const form = useCustomForm<BoardFormValues>({ schema: boardSchema, defaultValues });
-  const { fields, append, remove } = useFieldArray({
+  const { fields, addItem, hasReachedLimit, remove } = useLimitedFieldArray({
     control: form.control,
     name: 'columns',
+    maxItems: MAX_COLUMNS,
+    createItem: (currentCount) => ({
+      name: '',
+      color: DEFAULT_COLUMN_COLORS[currentCount % DEFAULT_COLUMN_COLORS.length],
+    }),
   });
-  const hitColumnLimit = fields.length >= MAX_COLUMNS;
 
   const handleOpenChange = (nextOpen: boolean) => {
     setOpen(nextOpen);
@@ -130,8 +134,15 @@ export const AddBoardDialog = ({
               Board Columns
             </FieldLegend>
             <FieldGroup className='gap-3'>
-              <div className='grid gap-3 max-md:max-h-54 max-md:overflow-y-auto max-md:no-scrollbar max-md:p-1'>
-                {fields.map((field, index) => (
+              <FieldArrayList
+                onAdd={addItem}
+                onRemove={remove}
+                fields={fields}
+                limitExceeded={hasReachedLimit}
+                addLabel='+ Add New Column'
+                limitMessage={`Maximum of ${MAX_COLUMNS} columns allowed per board.`}
+                className='max-md:max-h-54 max-md:overflow-y-auto max-md:no-scrollbar max-md:p-1'
+                renderItem={(field, index, { canRemove, remove: removeColumn }) => (
                   <FormField
                     key={field.id}
                     name={`columns.${index}.name`}
@@ -156,19 +167,19 @@ export const AddBoardDialog = ({
                                 <ColorWheel
                                   value={colorField.value}
                                   onChange={colorField.onChange}
-                                  onOpenChange={onColorPickerChange}
+                                  onOpenChange={setDismissalSuppressed}
                                   onDismiss={clearGuard}
                                 />
                               )}
                             />
                           </InputGroup>
-                          {fields.length > 1 && (
+                          {canRemove && (
                             <Button
                               type='button'
                               size='icon-sm'
                               variant='ghost'
                               className='hover:bg-transparent! hover:**:fill-destructive active:**:fill-destructive active:bg-background'
-                              onClick={() => remove(index)}
+                              onClick={removeColumn}
                             >
                               <CrossIcon aria-hidden />
                             </Button>
@@ -178,30 +189,8 @@ export const AddBoardDialog = ({
                       </FormItem>
                     )}
                   />
-                ))}
-              </div>
-
-              <div className='grid gap-2'>
-                {hitColumnLimit && (
-                  <p className='text-center text-xs font-medium text-muted-foreground'>
-                    Maximum of {MAX_COLUMNS} columns allowed per board.
-                  </p>
                 )}
-                <Button
-                  type='button'
-                  variant='secondary'
-                  className='h-10 rounded-full'
-                  disabled={hitColumnLimit}
-                  onClick={() =>
-                    append({
-                      name: '',
-                      color: DEFAULT_COLUMN_COLORS[fields.length % DEFAULT_COLUMN_COLORS.length],
-                    })
-                  }
-                >
-                  + Add New Column
-                </Button>
-              </div>
+              />
             </FieldGroup>
           </FieldSet>
 

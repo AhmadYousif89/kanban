@@ -26,7 +26,7 @@ import { FieldGroup, FieldLegend, FieldSet } from '@/components/ui/field';
 import { InputGroup, InputGroupInput } from '@/components/ui/input-group';
 import { cn } from '@/lib/utils';
 import { ColorWheel } from '@/components/color-wheel';
-import { useColorPickerDialogGuard } from '../../hooks/use-color-picker-dialog-guard';
+import { useDialogDismissalGuard } from '../../hooks/use-dialog-dismissal-guard';
 import { MAX_COLUMNS, DEFAULT_COLUMN_COLORS } from '../../context/kanban.utils';
 import { columnSchema, type ColumnFormValues } from './column.schema';
 
@@ -42,7 +42,7 @@ export const AddColumnDialog = ({
   triggerClassName,
 }: AddColumnDialogProps) => {
   const [open, setOpen] = useState(false);
-  const { clearGuard, onColorPickerChange, preventDialogDismissal } = useColorPickerDialogGuard();
+  const { clearGuard, setDismissalSuppressed, preventDialogDismissal } = useDialogDismissalGuard();
   const activeBoard = useActiveBoard();
   const { saveColumn } = useKanbanActions();
   const form = useCustomForm<ColumnFormValues>({ schema: columnSchema, defaultValues });
@@ -117,7 +117,7 @@ export const AddColumnDialog = ({
                           <ColorWheel
                             value={colorField.value}
                             onChange={colorField.onChange}
-                            onOpenChange={onColorPickerChange}
+                            onOpenChange={setDismissalSuppressed}
                             onDismiss={clearGuard}
                           />
                         )}

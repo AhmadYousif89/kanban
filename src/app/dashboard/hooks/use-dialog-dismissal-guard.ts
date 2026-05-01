@@ -2,12 +2,12 @@
 
 import { useCallback, useEffect, useRef } from 'react';
 
-export function useColorPickerDialogGuard() {
-  const suppressDialogDismissalRef = useRef(false);
+export function useDialogDismissalGuard() {
+  const dialogDismissedRef = useRef(false);
   const dismissResetTimerRef = useRef<number | null>(null);
 
   const clearGuard = useCallback(() => {
-    suppressDialogDismissalRef.current = false;
+    dialogDismissedRef.current = false;
 
     if (dismissResetTimerRef.current !== null) {
       window.clearTimeout(dismissResetTimerRef.current);
@@ -15,32 +15,32 @@ export function useColorPickerDialogGuard() {
     }
   }, []);
 
-  const onColorPickerChange = useCallback((isColorPickerOpen: boolean) => {
+  const setDismissalSuppressed = useCallback((isSuppressed: boolean) => {
     if (dismissResetTimerRef.current !== null) {
       window.clearTimeout(dismissResetTimerRef.current);
       dismissResetTimerRef.current = null;
     }
 
-    if (isColorPickerOpen) {
-      suppressDialogDismissalRef.current = true;
+    if (isSuppressed) {
+      dialogDismissedRef.current = true;
       return;
     }
 
     dismissResetTimerRef.current = window.setTimeout(() => {
-      suppressDialogDismissalRef.current = false;
+      dialogDismissedRef.current = false;
       dismissResetTimerRef.current = null;
     }, 0);
   }, []);
 
   const preventDialogDismissal = useCallback((e: { preventDefault(): void }) => {
-    if (suppressDialogDismissalRef.current) e.preventDefault();
+    if (dialogDismissedRef.current) e.preventDefault();
   }, []);
 
   useEffect(() => clearGuard, [clearGuard]);
 
   return {
     clearGuard,
-    onColorPickerChange,
+    setDismissalSuppressed,
     preventDialogDismissal,
   };
 }

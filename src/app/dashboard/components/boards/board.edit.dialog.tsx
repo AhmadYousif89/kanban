@@ -1,8 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useFieldArray } from 'react-hook-form';
-
+import { ColorWheel } from '@/components/color-wheel';
 import {
   Form,
   FormControl,
@@ -25,13 +24,14 @@ import {
 import { FieldGroup, FieldLegend, FieldSet } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { InputGroup, InputGroupInput } from '@/components/ui/input-group';
-import { useActiveBoard, useKanbanActions } from '../../context/kanban-context';
 import type { Board } from '../../context/kanban.types';
 import { DEFAULT_COLUMN_COLORS, MAX_COLUMNS } from '../../context/kanban.utils';
-import { useColorPickerDialogGuard } from '../../hooks/use-color-picker-dialog-guard';
-import { ColorWheel } from '@/components/color-wheel';
+import { useActiveBoard, useKanbanActions } from '../../context/kanban-context';
+import { useDialogDismissalGuard } from '../../hooks/use-dialog-dismissal-guard';
+import { useLimitedFieldArray } from '../../hooks/use-limited-field-array';
 import { DeleteColumnDialog } from '../columns/column.delete.dialog';
-import { boardSchema, defaultValues, type BoardFormValues } from './board.schema';
+import { FieldArrayList } from '../field-array-list';
+import { type BoardFormValues, boardSchema, defaultValues } from './board.schema';
 
 type EditBoardDialogProps = {
   open: boolean;
@@ -53,20 +53,24 @@ export const EditBoardDialog = ({ open, onOpenChange }: EditBoardDialogProps) =>
   const activeBoard = useActiveBoard();
   const { saveBoard } = useKanbanActions();
   const [pendingRemoveIndex, setPendingRemoveIndex] = useState<number | null>(null);
-  const { clearGuard, onColorPickerChange, preventDialogDismissal } = useColorPickerDialogGuard();
+  const { clearGuard, setDismissalSuppressed, preventDialogDismissal } = useDialogDismissalGuard();
 
   const form = useCustomForm<BoardFormValues>({
     schema: boardSchema,
     defaultValues: createDefaultValues(activeBoard),
   });
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, addItem, hasReachedLimit, remove } = useLimitedFieldArray({
     control: form.control,
     name: 'columns',
     keyName: 'fieldKey',
+    maxItems: MAX_COLUMNS,
+    createItem: (currentCount) => ({
+      name: '',
+      color: DEFAULT_COLUMN_COLORS[currentCount % DEFAULT_COLUMN_COLORS.length],
+    }),
   });
 
-  const hitColumnLimit = fields.length >= MAX_COLUMNS;
   const pendingColumn = pendingRemoveIndex !== null ? fields[pendingRemoveIndex] : null;
   const pendingBoardColumn =
     pendingColumn && activeBoard
@@ -75,8 +79,10 @@ export const EditBoardDialog = ({ open, onOpenChange }: EditBoardDialogProps) =>
 
   const handleOpenChange = (nextOpen: boolean) => {
     onOpenChange(nextOpen);
-    clearGuard();
-    setPendingRemoveIndex(null);
+    if (nextOpen) {
+      clearGuard();
+      setPendingRemoveIndex(null);
+    }
     form.reset(createDefaultValues(activeBoard));
   };
 
@@ -98,6 +104,7 @@ export const EditBoardDialog = ({ open, onOpenChange }: EditBoardDialogProps) =>
       activeBoard?.columns.find((column) => column.id === selectedColumn.id)?.tasks.length ?? 0;
 
     if (hasTasks > 0) {
+      setDismissalSuppressed(true);
       setPendingRemoveIndex(index);
       return;
     }
@@ -172,8 +179,15 @@ export const EditBoardDialog = ({ open, onOpenChange }: EditBoardDialogProps) =>
                 Board Columns
               </FieldLegend>
               <FieldGroup className='gap-3'>
-                <div className='grid gap-3 max-md:max-h-54 max-md:overflow-y-auto max-md:no-scrollbar max-md:p-1'>
-                  {fields.map((field, index) => (
+                <FieldArrayList
+                  fields={fields}
+                  limitExceeded={hasReachedLimit}
+                  limitMessage={`Maximum of ${MAX_COLUMNS} columns allowed per board.`}
+                  addLabel='+ Add New Column'
+                  onAdd={addItem}
+                  onRemove={handleRemoveColumn}
+                  className='max-md:max-h-54 max-md:overflow-y-auto max-md:no-scrollbar max-md:p-1'
+                  renderItem={(field, index, { canRemove, remove: removeColumn }) => (
                     <FormField
                       key={field.fieldKey}
                       name={`columns.${index}.name`}
@@ -199,51 +213,31 @@ export const EditBoardDialog = ({ open, onOpenChange }: EditBoardDialogProps) =>
                                   <ColorWheel
                                     value={colorField.value}
                                     onChange={colorField.onChange}
-                                    onOpenChange={onColorPickerChange}
+                                    onOpenChange={setDismissalSuppressed}
                                     onDismiss={clearGuard}
                                   />
                                 )}
                               />
                             </InputGroup>
-                            <Button
-                              type='button'
-                              size='icon-sm'
-                              variant='ghost'
-                              className='hover:bg-transparent! hover:**:fill-destructive active:**:fill-destructive active:bg-background'
-                              onClick={() => handleRemoveColumn(index)}
-                            >
-                              <span className='sr-only'>Remove column</span>
-                              <CrossIcon aria-hidden />
-                            </Button>
+                            {canRemove && (
+                              <Button
+                                type='button'
+                                size='icon-sm'
+                                variant='ghost'
+                                className='hover:bg-transparent! hover:**:fill-destructive active:**:fill-destructive active:bg-background'
+                                onClick={removeColumn}
+                              >
+                                <span className='sr-only'>Remove column</span>
+                                <CrossIcon aria-hidden />
+                              </Button>
+                            )}
                           </div>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                  ))}
-                </div>
-
-                <div className='grid gap-2'>
-                  {hitColumnLimit && (
-                    <p className='text-center text-xs font-medium text-muted-foreground'>
-                      Maximum of {MAX_COLUMNS} columns allowed per board.
-                    </p>
                   )}
-                  <Button
-                    type='button'
-                    variant='secondary'
-                    className='h-10 rounded-full'
-                    disabled={hitColumnLimit}
-                    onClick={() =>
-                      append({
-                        name: '',
-                        color: DEFAULT_COLUMN_COLORS[fields.length % DEFAULT_COLUMN_COLORS.length],
-                      })
-                    }
-                  >
-                    + Add New Column
-                  </Button>
-                </div>
+                />
               </FieldGroup>
             </FieldSet>
 
@@ -255,13 +249,17 @@ export const EditBoardDialog = ({ open, onOpenChange }: EditBoardDialogProps) =>
           </Form>
         </DialogContent>
       </Dialog>
+
       {pendingBoardColumn && (
         <DeleteColumnDialog
           boardId={activeBoard?.id ?? ''}
           column={pendingBoardColumn}
           open={pendingRemoveIndex !== null}
           onOpenChange={(nextOpen) => {
-            if (!nextOpen) setPendingRemoveIndex(null);
+            if (!nextOpen) {
+              setPendingRemoveIndex(null);
+              setDismissalSuppressed(false);
+            }
           }}
           onDelete={handleConfirmColumnRemoval}
           trigger={null}

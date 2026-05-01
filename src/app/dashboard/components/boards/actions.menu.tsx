@@ -54,7 +54,7 @@ export const BoardActionsMenu = () => {
       </DropdownMenu>
 
       {editOpen && <EditBoardDialog open={editOpen} onOpenChange={setEditOpen} />}
-      <DeleteBoardDialog open={deleteOpen} onOpenChange={setDeleteOpen} />
+      {deleteOpen && <DeleteBoardDialog open={deleteOpen} onOpenChange={setDeleteOpen} />}
     </>
   );
 };

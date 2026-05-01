@@ -1,7 +1,14 @@
 'use client';
 
-import { useFieldArray } from 'react-hook-form';
-
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  useCustomForm,
+} from '@/components/form';
 import { CrossIcon } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import {
@@ -23,20 +30,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-  useCustomForm,
-} from '@/components/form';
-
 import type { Task } from '../../context/kanban.types';
-import { useActiveBoard, useKanbanActions } from '../../context/kanban-context';
 import { MAX_SUBTASKS } from '../../context/kanban.utils';
-import { createDefaultSubtask, taskSchema, type TaskFormValues } from './task.schema';
+import { useActiveBoard, useKanbanActions } from '../../context/kanban-context';
+import { useLimitedFieldArray } from '../../hooks/use-limited-field-array';
+import { FieldArrayList } from '../field-array-list';
+import { createDefaultSubtask, type TaskFormValues, taskSchema } from './task.schema';
 
 type EditTaskDialogProps = {
   task: Task;
@@ -69,12 +68,12 @@ export const EditTaskDialog = ({ task, open, onOpenChange }: EditTaskDialogProps
     defaultValues: createDefaultValues(task),
   });
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, addItem, hasReachedLimit, remove } = useLimitedFieldArray({
     control: form.control,
     name: 'subtasks',
+    maxItems: MAX_SUBTASKS,
+    createItem: () => createDefaultSubtask(),
   });
-
-  const hasReachedSubtaskLimit = fields.length >= MAX_SUBTASKS;
 
   if (!board) return null;
 
@@ -184,8 +183,15 @@ export const EditTaskDialog = ({ task, open, onOpenChange }: EditTaskDialogProps
               Subtasks
             </FieldLegend>
             <FieldGroup className='gap-3'>
-              <div className='grid gap-3 max-md:max-h-32 max-md:overflow-y-auto max-md:no-scrollbar max-md:p-1'>
-                {fields.map((field, index) => (
+              <FieldArrayList
+                fields={fields}
+                limitExceeded={hasReachedLimit}
+                limitMessage={`Maximum of ${MAX_SUBTASKS} subtasks allowed.`}
+                addLabel='+ Add New Subtask'
+                onAdd={addItem}
+                onRemove={remove}
+                className='max-md:max-h-32 max-md:overflow-y-auto max-md:no-scrollbar max-md:p-1'
+                renderItem={(field, index, { canRemove, remove: removeSubtask }) => (
                   <FormField
                     key={field.id}
                     name={`subtasks.${index}.title`}
@@ -204,13 +210,13 @@ export const EditTaskDialog = ({ task, open, onOpenChange }: EditTaskDialogProps
                               placeholder={index === 0 ? 'e.g. Draft wireframes' : ''}
                             />
                           </FormControl>
-                          {fields.length > 1 && (
+                          {canRemove && (
                             <Button
                               type='button'
                               size='icon-sm'
                               variant='ghost'
                               className='hover:bg-transparent! hover:**:fill-destructive active:**:fill-destructive active:bg-background'
-                              onClick={() => remove(index)}
+                              onClick={removeSubtask}
                             >
                               <CrossIcon aria-hidden />
                               <span className='sr-only'>Remove subtask</span>
@@ -221,25 +227,8 @@ export const EditTaskDialog = ({ task, open, onOpenChange }: EditTaskDialogProps
                       </FormItem>
                     )}
                   />
-                ))}
-              </div>
-
-              <div className='grid gap-2'>
-                {hasReachedSubtaskLimit && (
-                  <p className='text-center text-xs font-medium text-muted-foreground'>
-                    Maximum of {MAX_SUBTASKS} subtasks allowed.
-                  </p>
                 )}
-                <Button
-                  type='button'
-                  variant='secondary'
-                  className='h-10 rounded-full'
-                  disabled={hasReachedSubtaskLimit}
-                  onClick={() => append(createDefaultSubtask())}
-                >
-                  + Add New Subtask
-                </Button>
-              </div>
+              />
             </FieldGroup>
           </FieldSet>
 

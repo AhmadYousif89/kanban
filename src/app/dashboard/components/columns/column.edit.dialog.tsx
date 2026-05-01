@@ -1,5 +1,7 @@
 'use client';
 
+import { useCallback, useState } from 'react';
+
 import {
   Form,
   FormControl,
@@ -24,7 +26,7 @@ import { InputGroup, InputGroupInput } from '@/components/ui/input-group';
 import { useActiveBoard, useKanbanActions } from '../../context/kanban-context';
 import type { Column } from '../../context/kanban.types';
 import { ColorWheel } from '@/components/color-wheel';
-import { useColorPickerDialogGuard } from '../../hooks/use-color-picker-dialog-guard';
+import { useDialogDismissalGuard } from '../../hooks/use-dialog-dismissal-guard';
 import { DeleteColumnDialog } from './column.delete.dialog';
 import { columnSchema, type ColumnFormValues } from './column.schema';
 
@@ -38,7 +40,20 @@ const createDefaultValues = (column: Column): ColumnFormValues => ({
 export const EditColumnDialog = ({ column, open, onOpenChange }: EditColumnDialogProps) => {
   const board = useActiveBoard();
   const { saveColumn } = useKanbanActions();
-  const { clearGuard, onColorPickerChange, preventDialogDismissal } = useColorPickerDialogGuard();
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const { clearGuard, setDismissalSuppressed, preventDialogDismissal } = useDialogDismissalGuard();
+
+  const preventEditDialogDismissal = useCallback(
+    (e: { preventDefault(): void }) => {
+      if (deleteOpen) {
+        e.preventDefault();
+        return;
+      }
+
+      preventDialogDismissal(e);
+    },
+    [deleteOpen, preventDialogDismissal],
+  );
   const form = useCustomForm<ColumnFormValues>({
     schema: columnSchema,
     defaultValues: createDefaultValues(column),
@@ -48,7 +63,10 @@ export const EditColumnDialog = ({ column, open, onOpenChange }: EditColumnDialo
 
   const handleOpenChange = (nextOpen: boolean) => {
     onOpenChange(nextOpen);
-    if (!nextOpen) clearGuard();
+    if (!nextOpen) {
+      clearGuard();
+      setDeleteOpen(false);
+    }
     form.reset(createDefaultValues(column));
   };
 
@@ -62,14 +80,19 @@ export const EditColumnDialog = ({ column, open, onOpenChange }: EditColumnDialo
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
         className='max-w-86 p-6'
-        onEscapeKeyDown={preventDialogDismissal}
-        onInteractOutside={preventDialogDismissal}
-        onPointerDownOutside={preventDialogDismissal}
+        onEscapeKeyDown={preventEditDialogDismissal}
+        onInteractOutside={preventEditDialogDismissal}
+        onPointerDownOutside={preventEditDialogDismissal}
       >
         <DialogHeader>
           <div className='flex items-center justify-between'>
             <DialogTitle className='text-lg font-bold'>Edit Column</DialogTitle>
-            <DeleteColumnDialog boardId={board.id} column={column} />
+            <DeleteColumnDialog
+              boardId={board.id}
+              column={column}
+              open={deleteOpen}
+              onOpenChange={setDeleteOpen}
+            />
           </div>
           <DialogDescription>Update this column name and accent color.</DialogDescription>
         </DialogHeader>
@@ -99,7 +122,7 @@ export const EditColumnDialog = ({ column, open, onOpenChange }: EditColumnDialo
                         <ColorWheel
                           value={colorField.value}
                           onChange={colorField.onChange}
-                          onOpenChange={onColorPickerChange}
+                          onOpenChange={setDismissalSuppressed}
                           onDismiss={clearGuard}
                         />
                       )}
