@@ -24,6 +24,44 @@ import {
 
 const clampIndex = (index: number, max: number) => Math.min(Math.max(index, 0), max);
 
+type RectLike = {
+  top: number;
+  height: number;
+};
+
+type ResolveTaskDropIndexArgs = {
+  sourceColumnIndex: number;
+  sourceTaskIndex: number;
+  targetColumnIndex: number;
+  targetTaskIndex: number;
+  activeRect: RectLike | null;
+  overRect: RectLike | null;
+};
+
+export const resolveTaskDropIndex = ({
+  sourceColumnIndex,
+  sourceTaskIndex,
+  targetColumnIndex,
+  targetTaskIndex,
+  activeRect,
+  overRect,
+}: ResolveTaskDropIndexArgs) => {
+  if (targetTaskIndex === 0) return 0;
+
+  const isSameColumnHover = sourceColumnIndex === targetColumnIndex;
+  const isAdjacentSwap = isSameColumnHover && Math.abs(sourceTaskIndex - targetTaskIndex) === 1;
+
+  if (isAdjacentSwap)
+    return sourceTaskIndex < targetTaskIndex ? targetTaskIndex + 1 : targetTaskIndex;
+
+  const shouldInsertAfterTask =
+    activeRect != null &&
+    overRect != null &&
+    activeRect.top + activeRect.height / 2 > overRect.top + overRect.height / 2;
+
+  return targetTaskIndex + (shouldInsertAfterTask ? 1 : 0);
+};
+
 export const resolveOverColId = (board: Board, overId: string | null): string | null => {
   if (!overId) return null;
 
@@ -39,8 +77,6 @@ export const resolveOverColId = (board: Board, overId: string | null): string | 
 
   if (!taskId) return null;
 
-  if (taskId.startsWith('empty-')) return taskId.slice(6);
-
   const taskLocation = findTaskLocation(board, taskId);
 
   return taskLocation ? (board.columns[taskLocation.columnIndex]?.id ?? null) : null;
@@ -55,7 +91,6 @@ export const moveTaskInBoard = (
   const sourceLocation = findTaskLocation(board, taskId);
 
   if (!sourceLocation) return board;
-
   const targetColumnIdx = board.columns.findIndex((column) => column.id === toColumnId);
 
   if (targetColumnIdx === -1) return board;

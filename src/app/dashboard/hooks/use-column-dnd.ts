@@ -8,11 +8,7 @@ import { useKanbanActions } from '../context/kanban-context';
 import { fromColumnDraggableId } from '../main/board.dnd';
 import { resolveOverColId } from './board-dnd-utils';
 
-type UseColumnDndOptions = {
-  board: Board | null;
-};
-
-export function useColumnDnd({ board }: UseColumnDndOptions) {
+export function useColumnDnd({ board }: { board: Board | null }) {
   const { moveColumn } = useKanbanActions();
   const [activeColumnId, setActiveColumnId] = useState<string | null>(null);
 

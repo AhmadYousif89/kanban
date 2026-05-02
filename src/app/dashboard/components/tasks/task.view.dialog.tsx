@@ -50,7 +50,7 @@ export const TaskViewDialog = memo(({ task, open, onOpenChange }: TaskViewDialog
       <DialogContent className='p-6 pb-8'>
         <div className='flex items-start justify-between gap-6'>
           <DialogHeader className='gap-6'>
-            <DialogTitle className='text-lg font-bold'>{task.title}</DialogTitle>
+            <DialogTitle className='break-all text-lg font-bold'>{task.title}</DialogTitle>
             <DialogDescription className='text-[13px] leading-6 text-balance'>
               {task.description ? <>{task.description}</> : 'No description provided.'}
             </DialogDescription>

@@ -7,13 +7,9 @@ import type { Board } from '../context/kanban.types';
 import { fromTaskDraggableId } from '../main/board.dnd';
 import { findTaskLocation } from '../context/kanban.utils';
 import { useKanbanActions } from '../context/kanban-context';
-import { moveTaskInBoard, resolveOverColId } from './board-dnd-utils';
+import { moveTaskInBoard, resolveOverColId, resolveTaskDropIndex } from './board-dnd-utils';
 
-type UseTaskDndOptions = {
-  board: Board | null;
-};
-
-export function useTaskDnd({ board }: UseTaskDndOptions) {
+export function useTaskDnd({ board }: { board: Board | null }) {
   const { moveTask } = useKanbanActions();
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
   const [previewBoard, setPreviewBoard] = useState<Board | null>(null);
@@ -76,39 +72,19 @@ export function useTaskDnd({ board }: UseTaskDndOptions) {
 
       if (targetColumnIndex === -1) return;
 
-      const targetColumn = currentBoard.columns[targetColumnIndex];
       const overTaskId = overId ? fromTaskDraggableId(overId) : null;
       const overTaskLocation = overTaskId ? findTaskLocation(currentBoard, overTaskId) : null;
-      const isSameColumnHover =
-        overTaskLocation != null && sourceLocation.columnIndex === targetColumnIndex;
-      const isAdjacentSwap =
-        isSameColumnHover && Math.abs(sourceLocation.taskIndex - overTaskLocation.taskIndex) === 1;
+      const activeRect = active.rect.current.translated ?? active.rect.current.initial;
+      const overRect = over?.rect ?? null;
 
-      const targetTaskIndex = (() => {
-        if (overTaskLocation == null) {
-          return targetColumn.tasks.length;
-        }
-
-        if (isAdjacentSwap) {
-          return sourceLocation.taskIndex < overTaskLocation.taskIndex
-            ? overTaskLocation.taskIndex + 1
-            : overTaskLocation.taskIndex;
-        }
-
-        const activeRect = active.rect.current.translated ?? active.rect.current.initial;
-        const overRect = over?.rect;
-        const isSameColumnBottomDrop =
-          sourceLocation.columnIndex === targetColumnIndex &&
-          overTaskLocation.taskIndex === targetColumn.tasks.length - 1 &&
-          sourceLocation.taskIndex < overTaskLocation.taskIndex;
-        const shouldInsertAfterTask =
-          isSameColumnBottomDrop ||
-          (activeRect != null &&
-            overRect != null &&
-            activeRect.top + activeRect.height / 2 > overRect.top + overRect.height / 2);
-
-        return overTaskLocation.taskIndex + (shouldInsertAfterTask ? 1 : 0);
-      })();
+      const targetTaskIndex = resolveTaskDropIndex({
+        sourceColumnIndex: sourceLocation.columnIndex,
+        targetColumnIndex,
+        sourceTaskIndex: sourceLocation.taskIndex,
+        targetTaskIndex: overTaskLocation?.taskIndex ?? 0,
+        activeRect,
+        overRect,
+      });
 
       const nextPreviewBoard = moveTaskInBoard(
         currentBoard,
@@ -117,9 +93,7 @@ export function useTaskDnd({ board }: UseTaskDndOptions) {
         targetTaskIndex,
       );
 
-      if (nextPreviewBoard !== currentBoard) {
-        setPreviewBoard(nextPreviewBoard);
-      }
+      if (nextPreviewBoard !== currentBoard) setPreviewBoard(nextPreviewBoard);
     },
     [activeTaskId, board, previewBoard],
   );

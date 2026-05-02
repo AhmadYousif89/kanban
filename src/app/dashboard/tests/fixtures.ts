@@ -53,8 +53,9 @@ export const rawBoards: RawBoard[] = [
   },
 ];
 
-export function createStateFixture(): KanbanState {
-  return createInitialState(rawBoards);
+export function createStateFixture(rawBoardsInput?: RawBoard[]): KanbanState {
+  const boards = rawBoardsInput ?? rawBoards;
+  return createInitialState(boards);
 }
 
 type RectProps = {
