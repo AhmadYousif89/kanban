@@ -42,7 +42,7 @@ export function createKanbanActions(dispatch: Dispatch<KanbanAction>): KanbanAct
       dispatch({ type: 'sidebar:toggle' });
     },
     toggleFullscreenView() {
-      dispatch({ type: 'view:toggle-fullscreen' });
+      dispatch({ type: 'dashboard:view' });
     },
     saveBoard(values: BoardInput, boardId?: string) {
       dispatch({ type: 'board:save', boardId, values });

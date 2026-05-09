@@ -20,7 +20,7 @@ describe('createKanbanActions', () => {
     expect(dispatch).toHaveBeenNthCalledWith(2, { type: 'sidebar:open' });
     expect(dispatch).toHaveBeenNthCalledWith(3, { type: 'sidebar:close' });
     expect(dispatch).toHaveBeenNthCalledWith(4, { type: 'sidebar:toggle' });
-    expect(dispatch).toHaveBeenNthCalledWith(5, { type: 'view:toggle-fullscreen' });
+    expect(dispatch).toHaveBeenNthCalledWith(5, { type: 'dashboard:view' });
   });
 
   it('dispatches board, column, and task mutations', () => {

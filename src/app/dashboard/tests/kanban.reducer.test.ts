@@ -9,7 +9,7 @@ describe('kanbanReducer', () => {
 
     expect(kanbanReducer(state, { type: 'sidebar:close' }).isSidebarOpen).toBe(false);
     expect(kanbanReducer(state, { type: 'sidebar:toggle' }).isSidebarOpen).toBe(false);
-    expect(kanbanReducer(state, { type: 'view:toggle-fullscreen' }).isFullscreenView).toBe(true);
+    expect(kanbanReducer(state, { type: 'dashboard:view' }).isFullscreenView).toBe(true);
   });
 
   it('selects only known boards', () => {

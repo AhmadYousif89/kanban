@@ -1,7 +1,7 @@
 'use client';
 
 import type { Dispatch, ReactNode } from 'react';
-import { createContext, useContext, useEffect, useReducer, useState } from 'react';
+import { createContext, useContext, useReducer } from 'react';
 import { LogoIcon } from '@/components/icons';
 import DATA from '@/data.json';
 import { createKanbanActions } from './kanban.actions';
@@ -12,9 +12,9 @@ import {
   selectBoards,
   selectHasBoards,
 } from './kanban.selectors';
-import { loadStoredState, persistState, syncFullscreenMode } from './kanban.storage';
 import type { KanbanAction, KanbanState, RawBoard } from './kanban.types';
 import { createInitialState } from './kanban.utils';
+import { useKanbanPersistence } from './use-kanban-persistence';
 
 type KanbanProviderProps = {
   children: ReactNode;
@@ -30,26 +30,7 @@ export function KanbanProvider({
   initialBoards = DATA.boards as RawBoard[],
 }: KanbanProviderProps) {
   const [state, dispatch] = useReducer(kanbanReducer, initialBoards, createInitialState);
-  const [isHydrated, setIsHydrated] = useState(false);
-
-  useEffect(() => {
-    const persistedState = loadStoredState(initialBoards);
-
-    if (persistedState) {
-      dispatch({ type: 'state:hydrate', state: persistedState });
-      syncFullscreenMode(persistedState.isFullscreenView);
-    } else {
-      syncFullscreenMode(false);
-    }
-
-    setIsHydrated(true);
-  }, [initialBoards]);
-
-  useEffect(() => {
-    if (!isHydrated) return;
-    persistState(state);
-    syncFullscreenMode(state.isFullscreenView);
-  }, [isHydrated, state]);
+  const isHydrated = useKanbanPersistence({ state, dispatch, initialBoards });
 
   if (!isHydrated) {
     return (

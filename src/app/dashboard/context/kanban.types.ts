@@ -73,7 +73,7 @@ export type KanbanState = {
 };
 
 export type KanbanAction =
-  | { type: 'view:toggle-fullscreen' }
+  | { type: 'dashboard:view' }
   | { type: 'state:hydrate'; state: KanbanState }
   | { type: 'board:select'; boardId: KanbanId }
   | { type: 'board:delete'; boardId: KanbanId }
