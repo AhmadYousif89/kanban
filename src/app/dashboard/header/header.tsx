@@ -1,5 +1,6 @@
 import { BoardName } from './board-name';
 import { BoardSelectMenu } from './board.menu';
+import { BoardSearchMenu } from './board-search.menu';
 import { BoardActionsMenu } from '../components/boards';
 import { LogoIcon, LogoMobileIcon } from '@/components/icons';
 import { AddTaskDialog } from '../components/tasks';
@@ -22,6 +23,7 @@ export function DashboardHeader() {
       <div className='flex items-center justify-between h-full grow gap-4 truncate'>
         <BoardName />
         <div className='flex items-center ml-auto gap-2 pr-1 md:gap-4'>
+          <BoardSearchMenu />
           <AddTaskDialog />
           <BoardActionsMenu />
         </div>
