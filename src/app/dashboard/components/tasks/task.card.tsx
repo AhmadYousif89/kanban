@@ -1,9 +1,10 @@
 'use client';
 
-import { memo, useMemo, useState } from 'react';
+import { memo, useMemo } from 'react';
 import type { ReactNode } from 'react';
 
 import { cn } from '@/lib/utils';
+import { useKanbanActions, useKanbanState } from '../../context/kanban-context';
 import type { Task } from '../../context/kanban.types';
 import { getProgressLabel } from '../../context/kanban.utils';
 import { TaskViewDialog } from '.';
@@ -25,7 +26,9 @@ const TaskCardBody = ({ task }: { task: Task }) => {
 };
 
 export const TaskCard = memo(({ task, dragHandle }: { task: Task; dragHandle?: ReactNode }) => {
-  const [viewOpen, setViewOpen] = useState(false);
+  const { activeTaskId } = useKanbanState();
+  const { closeTaskView, openTask } = useKanbanActions();
+  const viewOpen = activeTaskId === task.id;
 
   return (
     <div className='relative'>
@@ -36,12 +39,25 @@ export const TaskCard = memo(({ task, dragHandle }: { task: Task; dragHandle?: R
           'group flex flex-col wrap-break-word w-full rounded-lg bg-card px-4 py-6 text-left drop-shadow-lg drop-shadow-primary/10 transition duration-0 not-focus-visible:duration-300 hover:drop-shadow-primary/25 cursor-pointer',
           'focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:ring-ring/50 outline-0',
         )}
-        onClick={() => setViewOpen(true)}
+        onClick={() => openTask(task.id)}
       >
         <TaskCardBody task={task} />
       </button>
 
-      <TaskViewDialog task={task} open={viewOpen} onOpenChange={setViewOpen} />
+      {viewOpen && (
+        <TaskViewDialog
+          task={task}
+          open={viewOpen}
+          onOpenChange={(nextOpen) => {
+            if (nextOpen) {
+              openTask(task.id);
+              return;
+            }
+
+            closeTaskView();
+          }}
+        />
+      )}
     </div>
   );
 });

@@ -4,6 +4,8 @@ import type { BoardInput, ColumnInput, KanbanAction, TaskInput } from './kanban.
 
 export type KanbanActions = {
   selectBoard(boardId: string): void;
+  openTask(taskId: string): void;
+  closeTaskView(): void;
   openSidebar(): void;
   closeSidebar(): void;
   toggleSidebar(): void;
@@ -23,6 +25,12 @@ export function createKanbanActions(dispatch: Dispatch<KanbanAction>): KanbanAct
   return {
     selectBoard(boardId: string) {
       dispatch({ type: 'board:select', boardId });
+    },
+    openTask(taskId: string) {
+      dispatch({ type: 'task:view-open', taskId });
+    },
+    closeTaskView() {
+      dispatch({ type: 'task:view-close' });
     },
     openSidebar() {
       dispatch({ type: 'sidebar:open' });

@@ -31,7 +31,7 @@ function cleanSearchQuery(value: string) {
 function getTaskSearchResults(
   boards: Board[],
   query: string,
-  boardId: string | null,
+  boardId?: string | null,
 ): SearchResult[] {
   const normalizedQuery = cleanSearchQuery(query);
 
@@ -61,7 +61,7 @@ function getTaskSearchResults(
 
 export function BoardSearchMenu() {
   const boards = useBoards();
-  const { selectBoard } = useKanbanActions();
+  const { openTask, selectBoard } = useKanbanActions();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [selectedBoardId, setSelectedBoardId] = useState<string | null>(null);
@@ -69,15 +69,12 @@ export function BoardSearchMenu() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!e.ctrlKey || e.metaKey || e.altKey) return;
-
       if (e.code !== 'Slash' && e.key !== '/' && e.key !== '?') return;
-
       e.preventDefault();
       setOpen((pv) => !pv);
     };
 
     window.addEventListener('keydown', handleKeyDown);
-
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
@@ -89,19 +86,38 @@ export function BoardSearchMenu() {
     setSelectedBoardId(null);
   }, [open]);
 
+  if (!boards.length) return null;
+
   const selectedBoard = useMemo(
     () => boards.find((board) => board.id === selectedBoardId) ?? null,
     [boards, selectedBoardId],
   );
 
-  const searchResults = useMemo(
-    () => getTaskSearchResults(boards, query, selectedBoardId),
-    [boards, query, selectedBoardId],
-  );
+  const queryResults = useMemo(() => getTaskSearchResults(boards, query), [boards, query]);
 
-  const scopeLabel = selectedBoard?.name ?? 'All boards';
+  const searchResults = useMemo(() => {
+    if (!selectedBoardId) return queryResults;
+    return queryResults.filter((result) => result.board.id === selectedBoardId);
+  }, [queryResults, selectedBoardId]);
+
+  const resultCountsByBoard = useMemo(() => {
+    const counts = new Map<string, number>();
+    queryResults.forEach(({ board }) => counts.set(board.id, (counts.get(board.id) ?? 0) + 1));
+    return counts;
+  }, [queryResults]);
+
   const hasQuery = Boolean(cleanSearchQuery(query));
-  const resultCount = hasQuery ? `(${searchResults.length})` : '';
+  const scopeLabel = selectedBoard?.name ?? 'all boards';
+
+  const allBoardsResultCount = hasQuery ? queryResults.length : null;
+  const getBoardResultCount = (board: Board) =>
+    hasQuery ? (resultCountsByBoard.get(board.id) ?? 0) : null;
+
+  const handleItemSelect = (taskId: string, boardId: string) => {
+    selectBoard(boardId);
+    openTask(taskId);
+    setOpen(false);
+  };
 
   return (
     <>
@@ -109,16 +125,14 @@ export function BoardSearchMenu() {
         type='button'
         variant='outline'
         onClick={() => setOpen((current) => !current)}
-        className='h-8 md:h-9 rounded-full aspect-square text-xs text-muted-foreground border/50 duration-0'
+        className='h-8 md:h-9 rounded-full text-xs text-muted-foreground border/50 translate-y-0'
         aria-label='Search tasks'
       >
         <SearchIcon aria-hidden className='lg:hidden' />
-        <span className='hidden lg:inline'>
-          Search
-          <kbd className='ml-2 text-xs bg-accent/15 py-1 px-2 text-muted-foreground rounded-full group-hover/button:text-foreground'>
-            CTRL+/
-          </kbd>
-        </span>
+        <span className='hidden lg:inline-flex whitespace-nowrap'>Search</span>
+        <kbd className='hidden lg:inline-flex text-xs bg-accent/15 py-1 px-2 text-muted-foreground rounded-full group-hover/button:text-foreground transition'>
+          CTRL+/
+        </kbd>
       </Button>
 
       <CommandDialog
@@ -130,7 +144,6 @@ export function BoardSearchMenu() {
       >
         <Command shouldFilter={false}>
           <CommandInput
-            autoFocus
             value={query}
             onValueChange={setQuery}
             placeholder={`Search tasks in ${scopeLabel}`}
@@ -143,15 +156,15 @@ export function BoardSearchMenu() {
                 aria-label='Search all boards'
                 onSelect={() => setSelectedBoardId(null)}
                 className={cn(
-                  'gap-3 p-3 text-muted-foreground before:absolute before:top-12 before:left-3.5 before:h-screen before:w-0.5 before:bg-muted/50',
+                  'gap-3 p-3 text-muted-foreground',
                   selectedBoardId === null && 'bg-muted text-foreground data-selected:bg-muted',
                 )}
               >
                 <BoardIcon aria-hidden />
-                <p className='text-sm font-bold'>All boards</p>
+                <p className='text-sm font-bold'>All Boards {allBoardsResultCount}</p>
               </CommandItem>
 
-              <div className='ml-6 mt-2'>
+              <div className='mx-3.5 mt-2 border-l-2 border-muted/50 pl-3'>
                 {boards.map((board) => {
                   const isSelected = board.id === selectedBoardId;
 
@@ -173,7 +186,9 @@ export function BoardSearchMenu() {
                           isSelected ? '*:fill-current' : '*:fill-muted-foreground',
                         )}
                       />
-                      <p className='text-sm font-bold'>{board.name}</p>
+                      <p className='text-sm font-bold'>
+                        {board.name} {getBoardResultCount(board)}
+                      </p>
                     </CommandItem>
                   );
                 })}
@@ -182,7 +197,7 @@ export function BoardSearchMenu() {
 
             <div className='mt-4 mb-2 h-0.5 w-full bg-muted/50' />
 
-            <CommandGroup heading={`Results in ${scopeLabel} ${resultCount}`}>
+            <CommandGroup heading={`Results in ${scopeLabel}`}>
               {hasQuery ? (
                 searchResults.length ? (
                   <div className='m-3'>
@@ -193,10 +208,7 @@ export function BoardSearchMenu() {
                           .map((subtask) => subtask.title)
                           .join(' ')}`}
                         aria-label={`${task.title} in ${board.name}, ${column.name}`}
-                        onSelect={() => {
-                          selectBoard(board.id);
-                          setOpen(false);
-                        }}
+                        onSelect={() => handleItemSelect(task.id, board.id)}
                         className='items-start gap-3 rounded-lg px-3 py-3'
                       >
                         <div className='flex min-w-0 flex-1 flex-col gap-1 text-left'>

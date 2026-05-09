@@ -90,7 +90,7 @@ export function createTask(
   columnName: string,
   taskIndex: number,
 ): Task {
-  const taskId = `${columnId}-task-${taskIndex}-${slugify(task.title)}`;
+  const taskId = `${columnId}-task-${taskIndex}`;
 
   return {
     id: taskId,
@@ -135,9 +135,7 @@ export function mergeBoardColumns(
 
         existingColumn.name = nextName;
         existingColumn.color = cleanText(column.color, existingColumn.color);
-        existingColumn.tasks.forEach((task) => {
-          task.status = nextName;
-        });
+        existingColumn.tasks.forEach((task) => (task.status = nextName));
 
         return existingColumn;
       }
@@ -184,10 +182,7 @@ export function findTaskLocationInState(
   for (let boardIndex = 0; boardIndex < state.boards.length; boardIndex += 1) {
     const board = state.boards[boardIndex];
     const taskLocation = findTaskLocation(board, taskId);
-
-    if (taskLocation) {
-      return { boardIndex, ...taskLocation };
-    }
+    if (taskLocation) return { boardIndex, ...taskLocation };
   }
 
   return null;
@@ -204,6 +199,7 @@ export function createInitialState(rawBoards: RawBoard[]): KanbanState {
   return {
     boards,
     activeBoardId: boards[0]?.id ?? null,
+    activeTaskId: null,
     isSidebarOpen: true,
     isFullscreenView: false,
   };

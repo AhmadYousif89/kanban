@@ -67,6 +67,7 @@ export type BoardInput = {
 export type KanbanState = {
   boards: Board[];
   activeBoardId: KanbanId | null;
+  activeTaskId: KanbanId | null;
   isSidebarOpen: boolean;
   isFullscreenView: boolean;
 };
@@ -77,6 +78,8 @@ export type KanbanAction =
   | { type: 'board:select'; boardId: KanbanId }
   | { type: 'board:delete'; boardId: KanbanId }
   | { type: 'board:save'; boardId?: KanbanId; values: BoardInput }
+  | { type: 'task:view-open'; taskId: KanbanId }
+  | { type: 'task:view-close' }
   | {
       type: 'column:save';
       boardId: KanbanId;

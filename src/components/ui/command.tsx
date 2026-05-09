@@ -47,7 +47,10 @@ function CommandDialog({
         <DialogDescription>{description}</DialogDescription>
       </DialogHeader>
       <DialogContent
-        className={cn('top-1/3 translate-y-0 overflow-hidden rounded-xl! p-0', className)}
+        className={cn(
+          'top-1/4 lg:top-1/3 translate-y-0 overflow-hidden rounded-xl! p-0',
+          className,
+        )}
         showCloseButton={showCloseButton}
       >
         {children}
@@ -66,7 +69,7 @@ function CommandInput({
         <CommandPrimitive.Input
           data-slot='command-input'
           className={cn(
-            'placeholder:text-xs outline-hidden w-full disabled:cursor-not-allowed disabled:opacity-50',
+            'h-9 placeholder:text-xs outline-hidden w-full disabled:cursor-not-allowed disabled:opacity-50',
             className,
           )}
           {...props}
@@ -84,7 +87,7 @@ function CommandList({ className, ...props }: React.ComponentProps<typeof Comman
     <CommandPrimitive.List
       data-slot='command-list'
       className={cn(
-        'no-scrollbar max-h-72 scroll-py-1 overflow-x-hidden overflow-y-auto outline-none',
+        'no-scrollbar max-h-96 scroll-py-1 overflow-x-hidden overflow-y-auto outline-none',
         className,
       )}
       {...props}

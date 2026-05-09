@@ -50,6 +50,14 @@ function isBoard(value: unknown): value is Board {
   );
 }
 
+function isTaskPresent(state: KanbanState, taskId: unknown) {
+  if (typeof taskId !== 'string') return false;
+
+  return state.boards.some((board) =>
+    board.columns.some((column) => column.tasks.some((task) => task.id === taskId)),
+  );
+}
+
 function normalizePersistedState(state: KanbanState, fallback: KanbanState): KanbanState {
   const activeBoardId =
     typeof state.activeBoardId === 'string' &&
@@ -57,9 +65,12 @@ function normalizePersistedState(state: KanbanState, fallback: KanbanState): Kan
       ? state.activeBoardId
       : (state.boards[0]?.id ?? null);
 
+  const activeTaskId = isTaskPresent(state, state.activeTaskId) ? state.activeTaskId : null;
+
   return {
     boards: state.boards,
     activeBoardId,
+    activeTaskId,
     isSidebarOpen:
       typeof state.isSidebarOpen === 'boolean' ? state.isSidebarOpen : fallback.isSidebarOpen,
     isFullscreenView:
@@ -96,6 +107,10 @@ export function loadStoredState(rawBoards: RawBoard[]): KanbanState | null {
           typeof parsedState.activeBoardId === 'string' || parsedState.activeBoardId === null
             ? parsedState.activeBoardId
             : fallbackState.activeBoardId,
+        activeTaskId:
+          typeof parsedState.activeTaskId === 'string' || parsedState.activeTaskId === null
+            ? parsedState.activeTaskId
+            : fallbackState.activeTaskId,
         isSidebarOpen:
           typeof parsedState.isSidebarOpen === 'boolean'
             ? parsedState.isSidebarOpen

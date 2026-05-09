@@ -3,7 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { KanbanProvider, useActiveBoard } from '../context/kanban-context';
-import { BoardSearchMenu } from '../header/board-search.menu';
+import { DashboardHeader } from '../header/header';
+import { DashboardMain } from '../main/main';
 
 const searchBoards = [
   {
@@ -55,7 +56,8 @@ describe('BoardSearchMenu', () => {
   it('opens and closes with ctrl+/', async () => {
     render(
       <KanbanProvider initialBoards={searchBoards}>
-        <BoardSearchMenu />
+        <DashboardHeader />
+        <DashboardMain />
       </KanbanProvider>,
     );
 
@@ -77,7 +79,8 @@ describe('BoardSearchMenu', () => {
 
     render(
       <KanbanProvider initialBoards={searchBoards}>
-        <BoardSearchMenu />
+        <DashboardHeader />
+        <DashboardMain />
         <ActiveBoardLabel />
       </KanbanProvider>,
     );
@@ -86,6 +89,10 @@ describe('BoardSearchMenu', () => {
 
     const searchbox = await screen.findByPlaceholderText('Search tasks in All boards');
     await user.type(searchbox, 'plan');
+
+    expect(screen.getByText('All boards 2')).toBeInTheDocument();
+    expect(screen.getByText('Platform Launch 1')).toBeInTheDocument();
+    expect(screen.getByText('Marketing Plan 1')).toBeInTheDocument();
 
     expect(
       screen.getByRole('option', { name: 'Plan launch in Platform Launch, Todo' }),
@@ -103,6 +110,10 @@ describe('BoardSearchMenu', () => {
       screen.queryByRole('option', { name: 'Plan launch in Platform Launch, Todo' }),
     ).toBeNull();
 
+    expect(screen.getByText('All boards 2')).toBeInTheDocument();
+    expect(screen.getByText('Platform Launch 1')).toBeInTheDocument();
+    expect(screen.getByText('Marketing Plan 1')).toBeInTheDocument();
+
     await user.click(
       screen.getByRole('option', { name: 'Plan campaign in Marketing Plan, Ideas' }),
     );
@@ -110,5 +121,7 @@ describe('BoardSearchMenu', () => {
     await waitFor(() => {
       expect(screen.getByTestId('active-board')).toHaveTextContent('Marketing Plan');
     });
+
+    expect(await screen.findByRole('dialog', { name: 'Plan campaign' })).toBeInTheDocument();
   });
 });

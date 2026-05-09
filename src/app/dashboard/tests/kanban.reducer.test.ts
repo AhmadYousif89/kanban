@@ -20,6 +20,22 @@ describe('kanbanReducer', () => {
     expect(kanbanReducer(state, { type: 'board:select', boardId: 'missing' })).toBe(state);
   });
 
+  it('clears the active task when changing boards', () => {
+    const state = createStateFixture();
+    const activeBoard = state.boards[0];
+    const task = activeBoard.columns[0].tasks[0];
+
+    const openedTask = kanbanReducer(state, { type: 'task:view-open', taskId: task.id });
+    const switchedBoard = kanbanReducer(openedTask, {
+      type: 'board:select',
+      boardId: state.boards[1].id,
+    });
+
+    expect(openedTask.activeTaskId).toBe(task.id);
+    expect(switchedBoard.activeBoardId).toBe(state.boards[1].id);
+    expect(switchedBoard.activeTaskId).toBeNull();
+  });
+
   it('creates and updates boards', () => {
     const state = createStateFixture();
     const activeBoard = state.boards[0];

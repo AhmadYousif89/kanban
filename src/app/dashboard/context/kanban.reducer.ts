@@ -27,10 +27,16 @@ export function kanbanReducer(state: KanbanState, action: KanbanAction): KanbanS
       return { ...state, isSidebarOpen: !state.isSidebarOpen };
     case 'view:toggle-fullscreen':
       return { ...state, isFullscreenView: !state.isFullscreenView };
+    case 'task:view-open':
+      return state.activeTaskId === action.taskId
+        ? state
+        : { ...state, activeTaskId: action.taskId };
+    case 'task:view-close':
+      return state.activeTaskId === null ? state : { ...state, activeTaskId: null };
 
     case 'board:select': {
       return state.boards.some((board) => board.id === action.boardId)
-        ? { ...state, activeBoardId: action.boardId }
+        ? { ...state, activeBoardId: action.boardId, activeTaskId: null }
         : state;
     }
     case 'board:save': {
@@ -74,6 +80,17 @@ export function kanbanReducer(state: KanbanState, action: KanbanAction): KanbanS
           nextState.boards[boardIndex - 1]?.id ??
           nextState.boards[0]?.id ??
           null;
+      }
+
+      if (
+        nextState.activeTaskId &&
+        !nextState.boards.some((board) =>
+          board.columns.some((column) =>
+            column.tasks.some((task) => task.id === nextState.activeTaskId),
+          ),
+        )
+      ) {
+        nextState.activeTaskId = null;
       }
 
       return nextState;
@@ -203,6 +220,9 @@ export function kanbanReducer(state: KanbanState, action: KanbanAction): KanbanS
         taskLocation.taskIndex,
         1,
       );
+
+      if (nextState.activeTaskId === action.taskId) nextState.activeTaskId = null;
+
       return nextState;
     }
     case 'task:move': {
