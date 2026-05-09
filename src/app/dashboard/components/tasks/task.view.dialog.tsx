@@ -95,7 +95,7 @@ export const TaskViewDialog = memo(({ task, open, onOpenChange }: TaskViewDialog
         </div>
 
         <div className='grid gap-6'>
-          <p className='text-xs font-bold'>Current Status</p>
+          <p className='text-xs font-bold text-muted-foreground dark:text-white'>Current Status</p>
           <Select value={task.status} onValueChange={handleStatusChange}>
             <SelectTrigger id='task-status' className='hover:border-primary w-full'>
               <SelectValue placeholder='Select status' />

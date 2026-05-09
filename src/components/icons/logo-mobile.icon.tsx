@@ -8,7 +8,7 @@ export function LogoMobileIcon({ className, ...props }: SVGProps<SVGSVGElement>)
       width='24'
       height='25'
       xmlns='http://www.w3.org/2000/svg'
-      className={cn('size-fit', className)}
+      className={cn('size-fit fill-current', className)}
       {...props}
     >
       <title>Logo Mobile</title>

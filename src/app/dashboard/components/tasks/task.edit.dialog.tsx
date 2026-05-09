@@ -126,9 +126,7 @@ export const EditTaskDialog = ({ task, open, onOpenChange }: EditTaskDialogProps
 
         <Form form={form} onSubmit={handleSubmit} className='flex flex-col gap-6'>
           <FieldSet>
-            <FieldLegend className='font-bold text-muted-foreground dark:text-white'>
-              Task Name
-            </FieldLegend>
+            <FieldLegend>Task Name</FieldLegend>
             <FieldGroup className='gap-3'>
               <FormField
                 name='title'
@@ -152,9 +150,7 @@ export const EditTaskDialog = ({ task, open, onOpenChange }: EditTaskDialogProps
           </FieldSet>
 
           <FieldSet>
-            <FieldLegend className='font-bold text-muted-foreground dark:text-white'>
-              Description
-            </FieldLegend>
+            <FieldLegend>Description</FieldLegend>
             <FieldGroup className='gap-3'>
               <FormField
                 name='description'
@@ -179,9 +175,7 @@ export const EditTaskDialog = ({ task, open, onOpenChange }: EditTaskDialogProps
           </FieldSet>
 
           <FieldSet>
-            <FieldLegend className='font-bold text-muted-foreground dark:text-white'>
-              Subtasks
-            </FieldLegend>
+            <FieldLegend>Subtasks</FieldLegend>
             <FieldGroup className='gap-3'>
               <FieldArrayList
                 fields={fields}
@@ -233,9 +227,7 @@ export const EditTaskDialog = ({ task, open, onOpenChange }: EditTaskDialogProps
           </FieldSet>
 
           <FieldSet>
-            <FieldLegend className='font-bold text-muted-foreground dark:text-white'>
-              Status
-            </FieldLegend>
+            <FieldLegend>Status</FieldLegend>
             <FieldGroup className='gap-3'>
               <FormField
                 name='status'

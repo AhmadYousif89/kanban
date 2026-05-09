@@ -30,7 +30,7 @@ function FieldLegend({
       data-slot='field-legend'
       data-variant={variant}
       className={cn(
-        'mb-2 font-medium data-[variant=label]:text-xs data-[variant=legend]:text-xs',
+        'mb-2 font-bold text-muted-foreground dark:text-white data-[variant=label]:text-xs data-[variant=legend]:text-xs',
         className,
       )}
       {...props}
@@ -149,12 +149,14 @@ function FieldSeparator({
         'relative -my-2 h-5 text-sm group-data-[variant=outline]/field-group:-mb-2',
         className,
       )}
-      {...props}>
+      {...props}
+    >
       <Separator className='absolute inset-0 top-1/2' />
       {children && (
         <span
           className='relative mx-auto block w-fit bg-background px-2 text-muted-foreground'
-          data-slot='field-separator-content'>
+          data-slot='field-separator-content'
+        >
           {children}
         </span>
       )}
@@ -201,7 +203,8 @@ function FieldError({
       role='alert'
       data-slot='field-error'
       className={cn('text-xs font-medium text-destructive', className)}
-      {...props}>
+      {...props}
+    >
       {content}
     </div>
   );

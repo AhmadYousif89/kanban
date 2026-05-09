@@ -8,7 +8,7 @@ export function ShowSidebarIcon({ className, ...props }: SVGProps<SVGSVGElement>
       width='16'
       height='11'
       xmlns='http://www.w3.org/2000/svg'
-      className={cn('size-fit', className)}
+      className={cn('size-fit fill-current', className)}
       {...props}
     >
       <title>Show Sidebar</title>

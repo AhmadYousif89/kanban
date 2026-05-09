@@ -12,7 +12,7 @@ export function LogoIcon({
       width='153'
       height='26'
       xmlns='http://www.w3.org/2000/svg'
-      className={cn('size-fit', className)}
+      className={cn('size-fit fill-current', className)}
       {...props}
     >
       <title>Logo</title>

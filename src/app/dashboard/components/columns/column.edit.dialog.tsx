@@ -29,17 +29,19 @@ import { ColorWheel } from '@/components/color-wheel';
 import { useDialogDismissalGuard } from '../../hooks/use-dialog-dismissal-guard';
 import { DeleteColumnDialog } from './column.delete.dialog';
 import { columnSchema, type ColumnFormValues } from './column.schema';
+import { Input } from '@/components/ui/input';
 
 type EditColumnDialogProps = { column: Column; open: boolean; onOpenChange(open: boolean): void };
 
 const createDefaultValues = (column: Column): ColumnFormValues => ({
   name: column.name,
+  taskName: '',
   color: column.color,
 });
 
 export const EditColumnDialog = ({ column, open, onOpenChange }: EditColumnDialogProps) => {
   const board = useActiveBoard();
-  const { saveColumn } = useKanbanActions();
+  const { saveColumn, saveTask } = useKanbanActions();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const { clearGuard, setDismissalSuppressed, preventDialogDismissal } = useDialogDismissalGuard();
 
@@ -73,6 +75,7 @@ export const EditColumnDialog = ({ column, open, onOpenChange }: EditColumnDialo
   const handleSubmit = (values: ColumnFormValues) => {
     if (!board) return;
     saveColumn(board.id, { name: values.name.trim(), color: values.color }, column.id);
+    saveTask(board.id, column.id, { title: values?.taskName?.trim() ?? '', description: '' });
     onOpenChange(false);
   };
 
@@ -99,7 +102,7 @@ export const EditColumnDialog = ({ column, open, onOpenChange }: EditColumnDialo
 
         <Form form={form} onSubmit={handleSubmit} className='flex flex-col gap-6'>
           <FieldSet>
-            <FieldLegend className='font-bold text-muted-foreground'>Column Name</FieldLegend>
+            <FieldLegend>Column Name</FieldLegend>
             <FormField
               name='name'
               control={form.control}
@@ -108,12 +111,7 @@ export const EditColumnDialog = ({ column, open, onOpenChange }: EditColumnDialo
                   <FormLabel className='sr-only'>Column Name</FormLabel>
                   <InputGroup>
                     <FormControl>
-                      <InputGroupInput
-                        {...field}
-                        id={`column-edit-${column.id}`}
-                        type='text'
-                        placeholder='e.g. In Progress'
-                      />
+                      <InputGroupInput {...field} type='text' placeholder='e.g. In Progress' />
                     </FormControl>
                     <FormField
                       name='color'
@@ -130,6 +128,23 @@ export const EditColumnDialog = ({ column, open, onOpenChange }: EditColumnDialo
                   </InputGroup>
                   <FormMessage />
                 </FormItem>
+              )}
+            />
+          </FieldSet>
+
+          <FieldSet>
+            <FieldLegend>Add Task</FieldLegend>
+            <FormField
+              name='taskName'
+              control={form.control}
+              render={({ field }) => (
+                <>
+                  <FormLabel className='sr-only'>Add Task</FormLabel>
+                  <FormControl>
+                    <Input {...field} type='text' placeholder='e.g. Design system updates' />
+                  </FormControl>
+                  <FormMessage />
+                </>
               )}
             />
           </FieldSet>

@@ -139,62 +139,52 @@ export const AddTaskDialog = ({
 
         <Form form={form} onSubmit={handleSubmit} className='flex flex-col gap-6'>
           <FieldSet>
-            <FieldLegend className='font-bold text-muted-foreground dark:text-white'>
-              Task Name
-            </FieldLegend>
-            <FieldGroup className='gap-3'>
-              <FormField
-                name='title'
-                control={form.control}
-                render={({ field }) => (
-                  <FormItem className='gap-2'>
-                    <FormLabel className='sr-only'>Task Name</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        type='text'
-                        id='task-title'
-                        placeholder='e.g. Design system updates'
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </FieldGroup>
+            <FieldLegend>Task Name</FieldLegend>
+            <FormField
+              name='title'
+              control={form.control}
+              render={({ field }) => (
+                <FormItem className='gap-2'>
+                  <FormLabel className='sr-only'>Task Name</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type='text'
+                      id='task-title'
+                      placeholder='e.g. Design system updates'
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </FieldSet>
 
           <FieldSet>
-            <FieldLegend className='font-bold text-muted-foreground dark:text-white'>
-              Description
-            </FieldLegend>
-            <FieldGroup className='gap-3'>
-              <FormField
-                name='description'
-                control={form.control}
-                render={({ field }) => (
-                  <FormItem className='gap-2'>
-                    <FormLabel className='sr-only'>Description</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        {...field}
-                        id='task-description'
-                        rows={4}
-                        placeholder='e.g. Add support for the new dashboard widgets'
-                        className='h-28 resize-none'
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </FieldGroup>
+            <FieldLegend>Description</FieldLegend>
+            <FormField
+              name='description'
+              control={form.control}
+              render={({ field }) => (
+                <FormItem className='gap-2'>
+                  <FormLabel className='sr-only'>Description</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      {...field}
+                      id='task-description'
+                      rows={4}
+                      placeholder='e.g. Add support for the new dashboard widgets'
+                      className='h-28 resize-none'
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </FieldSet>
 
           <FieldSet>
-            <FieldLegend className='font-bold text-muted-foreground dark:text-white'>
-              Subtasks
-            </FieldLegend>
+            <FieldLegend>Subtasks</FieldLegend>
             <FieldGroup className='gap-3'>
               <FieldArrayList
                 onAdd={addItem}
@@ -246,37 +236,33 @@ export const AddTaskDialog = ({
           </FieldSet>
 
           <FieldSet>
-            <FieldLegend className='font-bold text-muted-foreground dark:text-white'>
-              Status
-            </FieldLegend>
-            <FieldGroup className='gap-3'>
-              <FormField
-                name='status'
-                control={form.control}
-                render={({ field }) => (
-                  <FormItem className='gap-2'>
-                    <FormLabel className='sr-only'>Task Status</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <FormControl>
-                        <SelectTrigger id='task-status' className='hover:border-primary'>
-                          <SelectValue placeholder='Select status' />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent position='popper' className='w-(--radix-select-trigger-width)'>
-                        <SelectGroup className='p-2'>
-                          {activeBoard.columns.map((column) => (
-                            <SelectItem key={column.id} value={column.name}>
-                              {column.name}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </FieldGroup>
+            <FieldLegend>Status</FieldLegend>
+            <FormField
+              name='status'
+              control={form.control}
+              render={({ field }) => (
+                <FormItem className='gap-2'>
+                  <FormLabel className='sr-only'>Task Status</FormLabel>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <FormControl>
+                      <SelectTrigger id='task-status' className='hover:border-primary'>
+                        <SelectValue placeholder='Select status' />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent position='popper' className='w-(--radix-select-trigger-width)'>
+                      <SelectGroup className='p-2'>
+                        {activeBoard.columns.map((column) => (
+                          <SelectItem key={column.id} value={column.name}>
+                            {column.name}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </FieldSet>
 
           <DialogFooter>

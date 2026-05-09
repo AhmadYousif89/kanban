@@ -149,9 +149,7 @@ export const EditBoardDialog = ({ open, onOpenChange }: EditBoardDialogProps) =>
 
           <Form form={form} onSubmit={handleSubmit} className='flex flex-col gap-6'>
             <FieldSet>
-              <FieldLegend className='font-bold text-muted-foreground dark:text-white'>
-                Board Name
-              </FieldLegend>
+              <FieldLegend>Board Name</FieldLegend>
               <FieldGroup className='gap-3'>
                 <FormField
                   name='name'
@@ -175,9 +173,7 @@ export const EditBoardDialog = ({ open, onOpenChange }: EditBoardDialogProps) =>
             </FieldSet>
 
             <FieldSet>
-              <FieldLegend className='font-bold text-muted-foreground dark:text-white'>
-                Board Columns
-              </FieldLegend>
+              <FieldLegend>Board Columns</FieldLegend>
               <FieldGroup className='gap-3'>
                 <FieldArrayList
                   fields={fields}

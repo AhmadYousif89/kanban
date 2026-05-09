@@ -96,7 +96,9 @@ export const SortableColumn = memo(
           />
         </SortableContext>
 
-        <EditColumnDialog column={column} open={editOpen} onOpenChange={setEditOpen} />
+        {editOpen && (
+          <EditColumnDialog column={column} open={editOpen} onOpenChange={setEditOpen} />
+        )}
       </li>
     );
   },

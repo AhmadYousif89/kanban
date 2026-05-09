@@ -8,7 +8,7 @@ export function ChevronDownIcon({ className, ...props }: SVGProps<SVGSVGElement>
       width='10'
       height='7'
       xmlns='http://www.w3.org/2000/svg'
-      className={cn('size-fit', className)}
+      className={cn('size-fit fill-current', className)}
       {...props}
     >
       <title>Chevron Down</title>
