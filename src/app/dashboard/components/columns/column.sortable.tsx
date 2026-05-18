@@ -18,10 +18,11 @@ type SortableColumnProps = {
   column: Column;
   isDropTarget: boolean;
   isTaskDragging: boolean;
+  setColumnRef?(columnId: string, node: HTMLLIElement | null): void;
 };
 
 export const SortableColumn = memo(
-  ({ column, isDropTarget, isTaskDragging }: SortableColumnProps) => {
+  ({ column, isDropTarget, isTaskDragging, setColumnRef }: SortableColumnProps) => {
     const [editOpen, setEditOpen] = useState(false);
     const {
       listeners,
@@ -43,6 +44,7 @@ export const SortableColumn = memo(
     const setNodeRef = (node: HTMLLIElement | null) => {
       setSortableNodeRef(node);
       setDroppableNodeRef(node);
+      setColumnRef?.(column.id, node);
     };
 
     const onEdit = useCallback(() => setEditOpen(true), []);

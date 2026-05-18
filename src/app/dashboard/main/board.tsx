@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { DndContext, DragOverlay } from '@dnd-kit/core';
 import { horizontalListSortingStrategy, SortableContext } from '@dnd-kit/sortable';
 
@@ -29,6 +29,16 @@ export const ActiveBoard = () => {
   } = useBoardDnd({ board });
 
   const renderBoard = previewBoard ?? board;
+  const boardViewportRef = useRef<HTMLElement | null>(null);
+  const columnRefs = useRef(new Map<string, HTMLLIElement | null>());
+
+  const setColumnRef = useCallback((columnId: string, node: HTMLLIElement | null) => {
+    if (node) {
+      columnRefs.current.set(columnId, node);
+      return;
+    }
+    columnRefs.current.delete(columnId);
+  }, []);
 
   const activeTask = useMemo(() => {
     if (!activeTaskId || !renderBoard) return null;
@@ -44,12 +54,41 @@ export const ActiveBoard = () => {
     return renderBoard.columns.find((col) => col.id === activeColumnId) ?? null;
   }, [activeColumnId, renderBoard]);
 
+  useEffect(() => {
+    if (!isTaskDragging || !renderBoard) return;
+
+    const targetColumnId = overColumnId ?? activeColumnId;
+
+    if (!targetColumnId) return;
+
+    const boardViewport = boardViewportRef.current;
+    const targetColumn = columnRefs.current.get(targetColumnId);
+
+    if (!boardViewport || !targetColumn) return;
+
+    const boardRect = boardViewport.getBoundingClientRect();
+    const targetRect = targetColumn.getBoundingClientRect();
+    const edgePadding = 24;
+
+    if (targetRect.right > boardRect.right - edgePadding) {
+      boardViewport.scrollLeft += targetRect.right - boardRect.right + edgePadding;
+      return;
+    }
+
+    if (targetRect.left < boardRect.left + edgePadding) {
+      boardViewport.scrollLeft += targetRect.left - boardRect.left - edgePadding;
+    }
+  }, [activeColumnId, isTaskDragging, overColumnId, renderBoard]);
+
   if (!renderBoard || !renderBoard.columns.length) return <EmptyStateBoard />;
 
   const hitColumnLimit = renderBoard.columns.length >= MAX_COLUMNS;
 
   return (
-    <section className='flex flex-col h-full py-4 px-2 md:px-3 md:py-6 overflow-auto no-scrollbar'>
+    <section
+      ref={boardViewportRef}
+      className='flex flex-col h-full py-4 px-2 md:px-3 md:py-6 overflow-x-auto no-scrollbar'
+    >
       <DndContext
         sensors={sensors}
         onDragEnd={onDragEnd}
@@ -66,6 +105,7 @@ export const ActiveBoard = () => {
                 column={column}
                 isDropTarget={overColumnId === column.id}
                 isTaskDragging={isTaskDragging}
+                setColumnRef={setColumnRef}
               />
             ))}
 
